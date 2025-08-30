@@ -1,0 +1,17 @@
+---
+FutureSession:
+  comment: |-
+    A future that resolves with Session.
+
+    @see Cluster::connectAsync()
+  methods:
+    get:
+      comment: ""
+      params:
+        timeout:
+          comment: ""
+          type: int|double|null
+      return:
+        comment: A connected session
+        type: \Cassandra\Session
+...

@@ -1,0 +1,114 @@
+title:    DataStax PHP Driver
+summary:  DataStax PHP Driver for Apache Cassandra
+homepage: http://datastax.github.io/php-driver/
+theme:    datastax
+swiftype_drivers: phpdrivers
+maintenance_mode: YES
+sections:
+  - title:     Building PHP Extension
+    prefix:    /building
+    type:      markdown
+    files:     'ext/README.md'
+  - title:     Features
+    prefix:    /features
+    sources:
+      - type:  markdown
+        files: 'features/**/*.md'
+      - type:  gherkin
+        files: 'features/**/*.feature'
+
+  - title:     API docs
+    prefix:    /api
+    type:      doxygen
+    directory: ['ext/doc']
+    config: |
+      RECURSIVE     = YES
+      FILE_PATTERNS = *.php
+      EXCLUDE = ext/doc/generate_doc.php ext/doc/generate_doc_common.php ext/doc/generate_doc_yaml.php
+      INPUT_FILTER  = ./doxygen.rb
+rewrites:
+  - \.feature: ''
+  - \#L92: '#using-cassandra-the-tinyint-and-smallint-types'
+  - \#L135: '#using-cassandra-date-type'
+  - \#L170: '#using-cassandra-time-type'
+  - vc_build.bat: https://github.com/datastax/php-dse-driver/blob/master/ext/vc_build.bat
+  - http://downloads.datastax.com/php-driver/1.0.0/: http://downloads.datastax.com/php-driver/
+  - http://downloads.datastax.com/php-driver/1.1.0/: http://downloads.datastax.com/php-driver/
+  - http://downloads.datastax.com/php-driver/1.2.0/: http://downloads.datastax.com/php-driver/
+  - http://datastax.github.io/php-driver/features/http://localhost:8000/features/datatypes/: https://docs.datastax.com/en/developer/php-driver/latest/features/
+  - http://datastax.github.io/php-driver/api/Cassandra/interface.Type/: https://docs.datastax.com/en/developer/php-driver/latest/api/Cassandra/class.Type/
+  - search: 'https://(helpdocs|docs).datastax.com/(en/astra/)?(aws|gcp)/(dscloud/apollo|doc/dscloud/astra)/dscloudObtainingCredentials.html'
+    replace: 'https://docs.datastax.com/en/astra-serverless/docs/connect/secure-connect-bundle.html'
+  - search: 'https://(helpdocs|docs).datastax.com/(en/astra/)?(aws|gcp)/(dscloud/apollo|doc/dscloud/astra)/dscloudShareClusterDetails.html'
+    replace: 'https://docs.datastax.com/en/astra-serverless/docs/manage/org/manage-tokens.html'
+  - search: 'https://(helpdocs|docs).datastax.com/(en/astra/)?(aws|gcp)/(dscloud/apollo|doc/dscloud/astra)/dscloudGettingStarted.html'
+    replace: 'https://docs.datastax.com/en/astra-serverless/docs/getting-started/getting-started.html'
+  - search: 'http://downloads.datastax.com/java-driver/'
+    replace: 'https://downloads.datastax.com/#datastax-drivers'
+  - search: 'https://docs.datastax.com/en/drivers/java/(4.[0-9]+)/com/datastax/oss/driver/api/core/cql/SyncCqlSession.html%60'
+    replace: 'https://docs.datastax.com/en/drivers/java/\1/com/datastax/oss/driver/api/core/cql/SyncCqlSession.html'
+  - search: 'https://docs.datastax.com/en/drivers/java/(4.[0-9]+)/com/datastax/oss/driver/api/mapper/EntityHelper.html'
+    replace: 'https://docs.datastax.com/en/drivers/java/\1/com/datastax/oss/driver/api/mapper/entity/EntityHelper.html'
+  - search: '(http|https)://www.datastax.com/drivers/java/'
+    replace: 'https://docs.datastax.com/en/drivers/java/'
+  - search: 'http://docs.datastax.com/en/drivers/java'
+    replace: 'https://docs.datastax.com/en/drivers/java'
+  - search: 'https://docs.astra.datastax.com/docs/obtaining-database-credentials'
+    replace: 'https://docs.datastax.com/en/astra-serverless/docs/connect/secure-connect-bundle.html'
+  - search: 'https://docs.astra.datastax.com/docs/creating-your-astra-database'
+    replace: 'https://docs.datastax.com/en/astra-serverless/docs/getting-started/create-db-choices.html'
+  - search: 'https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained'
+    replace: 'https://github.com/google/guava/wiki/ListenableFutureExplained'
+  - search: 'https://code.google.com/p/snappy/'
+    replace: 'https://google.github.io/snappy/'
+
+  - search: 'https://community.datastax.com/index.html'
+    replace: 'https://www.datastax.com/workshops'
+links:
+  - title: Binaries
+    href:  http://downloads.datastax.com/php-driver
+  - title: Code
+    href:  https://github.com/datastax/php-driver
+  - title: Docs
+    href:  http://docs.datastax.com/en/developer/php-driver
+  - title: Issues
+    href:  https://datastax-oss.atlassian.net/browse/PHP
+  - title: Mailing List
+    href:  https://groups.google.com/a/lists.datastax.com/forum/#!forum/php-driver-user
+  - title: Slack
+    href:  https://academy.datastax.com/slack
+  - title: Releases
+    href:  https://github.com/datastax/php-driver/releases
+versions:
+  - name: 1.3
+    ref: v1.3.2
+  - name: 1.2
+    ref:  v1.2.0
+  - name: 1.1
+    ref:  v1.1.0
+  - name: 1.0
+    ref:  v1.0.1
+checks:
+  external_links:
+    exclude:
+      - 'https://twitter.com/dsJavaDriver'
+      - 'https://twitter.com/datastaxeng'
+      - 'https://twitter.com/datastax'
+      - 'https://twitter.com/al3xandru'
+      - 'http://twitter.com/avalanche123'
+      - 'https://projectreactor.io'
+      - 'https://docs.datastax.com/en/drivers/java/4.[0-9]+/com/datastax/oss/driver/internal/'
+      - 'http://www.planetcassandra.org/blog/user-defined-functions-in-cassandra-3-0/'
+      - 'http://www.planetcassandra.org/making-the-change-from-thrift-to-cql/'
+      - 'https://academy.datastax.com/slack'
+      - 'https://community.datastax.com/index.html'
+      - 'https://micrometer.io/docs'
+      - 'http://datastax.github.io/java-driver/features/shaded_jar/'
+      - 'https://ci.appveyor.com/api/projects/status/8vrxpkfl4xm2f3nm'
+      - 'http://www.behat.org'
+      - 'https://github.com/datastax/php-dse-driver/blob/master/ext/vc_build.bat'
+  internal_links:
+    exclude:
+      - 'netty_pipeline/'
+      - '../core/'
+      - '%5Bguava%20eviction%5D'
