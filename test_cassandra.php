@@ -33,7 +33,7 @@ try {
     $ssl = $sslBuilder->build();
 
     // 5) Construction du cluster
-    $clusterBuilder = Cassandra\Cluster::builder();
+    $clusterBuilder = new Cassandra\Cluster\Builder();
     $clusterBuilder->withContactPoints($host);
     $clusterBuilder->withPort($port);
     $clusterBuilder->withSSL($ssl);
