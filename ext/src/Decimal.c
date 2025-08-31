@@ -511,20 +511,35 @@ static zend_function_entry php_driver_decimal_methods[] = {
 
 static php_driver_value_handlers php_driver_decimal_handlers;
 
+#if PHP_VERSION_ID >= 80000
+static HashTable*
+php_driver_decimal_gc(zend_object *object, zval **table, int *n)
+{
+  *table = NULL;
+  *n = 0;
+  return zend_std_get_properties(object);
+}
+
+static HashTable*
+php_driver_decimal_properties(zend_object *object)
+{
+  char* string;
+  int string_len;
+  php5to7_zval type;
+  php5to7_zval value;
+  php5to7_zval scale;
+  zval obj_zval;
+  ZVAL_OBJ(&obj_zval, object);
+
+  php_driver_numeric *self = PHP_DRIVER_GET_NUMERIC(&obj_zval);
+  HashTable *props = zend_std_get_properties(object);
+#else
 static HashTable*
 php_driver_decimal_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
 {
   *table = NULL;
   *n = 0;
-  #if PHP_VERSION_ID >= 80000
-  #if PHP_VERSION_ID >= 80000
-  return zend_std_get_properties(object);
-#else
   return zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
-#else
-  return zend_std_get_properties(object TSRMLS_CC);
-#endif
 }
 
 static HashTable*
@@ -537,9 +552,6 @@ php_driver_decimal_properties(zval *object TSRMLS_DC)
   php5to7_zval scale;
 
   php_driver_numeric *self = PHP_DRIVER_GET_NUMERIC(object);
-  #if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
   HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
 #endif
 
@@ -580,6 +592,7 @@ php_driver_decimal_compare(zval *obj1, zval *obj2 TSRMLS_DC)
     return 1;
   }
 }
+#endif
 
 static unsigned
 php_driver_decimal_hash_value(zval *obj TSRMLS_DC)
@@ -614,12 +627,7 @@ php_driver_decimal_free(php5to7_zend_object_free *object TSRMLS_DC)
   php_driver_numeric *self = PHP5TO7_ZEND_OBJECT_GET(numeric, object);
 
   mpz_clear(self->data.decimal.value);
-
-  #if PHP_VERSION_ID >= 80000
-  zend_object_std_dtor(&self->std);
-#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
-#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 #endif
