@@ -1,7 +1,6 @@
 src/BatchStatement.lo: \
- /home/lucasneontine/php-cassandra-driver/ext/src/BatchStatement.c \
- php_driver.h config.h \
- /tmp/php-driver-installation/build/include/cassandra.h \
+ /home/agabadounir/php-cassandra/ext/src/BatchStatement.c php_driver.h \
+ config.h /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \
  /usr/include/php/20230831/main/php_version.h \
  /usr/include/php/20230831/Zend/zend.h \

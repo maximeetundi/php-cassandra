@@ -1,4 +1,4 @@
-src/Bigint.lo: /home/lucasneontine/php-cassandra-driver/ext/src/Bigint.c \
+src/Bigint.lo: /home/agabadounir/php-cassandra/ext/src/Bigint.c \
  php_driver.h config.h \
  /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \
