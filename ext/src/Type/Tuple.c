@@ -137,19 +137,42 @@ PHP_METHOD(TypeTuple, create)
   }
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_none, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_string, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_array, 0, 0, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_create_tuple, 0, 0, PHP_DRIVER_NAMESPACE "\\Tuple", 0)
+  ZEND_ARG_INFO(0, values)
+ZEND_END_ARG_INFO()
+#else
 ZEND_BEGIN_ARG_INFO_EX(arginfo_none, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_values, 0, ZEND_RETURN_VALUE, 0)
   ZEND_ARG_INFO(0, values)
 ZEND_END_ARG_INFO()
+#endif
 
 static zend_function_entry php_driver_type_tuple_methods[] = {
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(TypeTuple, __construct, arginfo_none,        ZEND_ACC_PRIVATE)
+  PHP_ME(TypeTuple, name,        arginfo_string,      ZEND_ACC_PUBLIC)
+  PHP_ME(TypeTuple, __toString,  arginfo_string,      ZEND_ACC_PUBLIC)
+  PHP_ME(TypeTuple, types,       arginfo_array,       ZEND_ACC_PUBLIC)
+  PHP_ME(TypeTuple, create,      arginfo_create_tuple,ZEND_ACC_PUBLIC)
+#else
   PHP_ME(TypeTuple, __construct, arginfo_none,   ZEND_ACC_PRIVATE)
   PHP_ME(TypeTuple, name,        arginfo_none,   ZEND_ACC_PUBLIC)
   PHP_ME(TypeTuple, __toString,  arginfo_none,   ZEND_ACC_PUBLIC)
   PHP_ME(TypeTuple, types,       arginfo_none,   ZEND_ACC_PUBLIC)
   PHP_ME(TypeTuple, create,      arginfo_values, ZEND_ACC_PUBLIC)
+#endif
   PHP_FE_END
 };
 

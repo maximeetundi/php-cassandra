@@ -101,19 +101,42 @@ PHP_METHOD(TypeSet, create)
   }
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_none, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_string, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_value_type, 0, 0, PHP_DRIVER_NAMESPACE "\\Type", 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_create_set, 0, 0, PHP_DRIVER_NAMESPACE "\\Set", 0)
+  ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+#else
 ZEND_BEGIN_ARG_INFO_EX(arginfo_none, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_value, 0, ZEND_RETURN_VALUE, 0)
   ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
+#endif
 
 static zend_function_entry php_driver_type_set_methods[] = {
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(TypeSet, __construct, arginfo_none,       ZEND_ACC_PRIVATE)
+  PHP_ME(TypeSet, name,        arginfo_string,     ZEND_ACC_PUBLIC)
+  PHP_ME(TypeSet, valueType,   arginfo_value_type, ZEND_ACC_PUBLIC)
+  PHP_ME(TypeSet, __toString,  arginfo_string,     ZEND_ACC_PUBLIC)
+  PHP_ME(TypeSet, create,      arginfo_create_set, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(TypeSet, __construct, arginfo_none,  ZEND_ACC_PRIVATE)
   PHP_ME(TypeSet, name,        arginfo_none,  ZEND_ACC_PUBLIC)
   PHP_ME(TypeSet, valueType,   arginfo_none,  ZEND_ACC_PUBLIC)
   PHP_ME(TypeSet, __toString,  arginfo_none,  ZEND_ACC_PUBLIC)
   PHP_ME(TypeSet, create,      arginfo_value, ZEND_ACC_PUBLIC)
+#endif
   PHP_FE_END
 };
 

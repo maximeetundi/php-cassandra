@@ -23,8 +23,16 @@ PHP_METHOD(PreparedStatement, __construct)
 {
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_none, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+#else
+ZEND_BEGIN_ARG_INFO_EX(arginfo_none, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+#endif
+
 static zend_function_entry php_driver_prepared_statement_methods[] = {
-  PHP_ME(PreparedStatement, __construct, NULL, ZEND_ACC_PRIVATE | ZEND_ACC_CTOR)
+  PHP_ME(PreparedStatement, __construct, arginfo_none, ZEND_ACC_PRIVATE | ZEND_ACC_CTOR)
   PHP_FE_END
 };
 

@@ -280,35 +280,90 @@ PHP_METHOD(UserTypeValue, rewind)
 }
 /* }}} */
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo__construct, 0, ZEND_RETURN_VALUE, 1)
-  ZEND_ARG_INFO(0, types)
+#if PHP_VERSION_ID >= 80100
+/* Typed arginfo for PHP 8.1+ */
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_none, 0, 0, IS_VOID, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_value, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_bool, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_array, 0, 0, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_count, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_type_user_type, 0, 0, PHP_DRIVER_NAMESPACE "\\Type\\UserType", 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_mixed, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_key_maybe_string, 0, 0, MAY_BE_STRING|MAY_BE_NULL)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_construct_types, 0, 0, 1)
+  ZEND_ARG_TYPE_INFO(0, types, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_set, 0, 2, IS_VOID, 0)
+  ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
   ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_name, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_get, 0, 1, IS_MIXED, 0)
+  ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+#else
+/* Legacy arginfo without return types */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_construct_types, 0, ZEND_RETURN_VALUE, 1)
+  ZEND_ARG_INFO(0, types)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_set, 0, ZEND_RETURN_VALUE, 2)
+  ZEND_ARG_INFO(0, name)
+  ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_get, 0, ZEND_RETURN_VALUE, 1)
   ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_none, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
+#endif
 
 static zend_function_entry php_driver_user_type_value_methods[] = {
-  PHP_ME(UserTypeValue, __construct, arginfo__construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-  PHP_ME(UserTypeValue, type, arginfo_none, ZEND_ACC_PUBLIC)
-  PHP_ME(UserTypeValue, values, arginfo_none, ZEND_ACC_PUBLIC)
-  PHP_ME(UserTypeValue, set, arginfo_value, ZEND_ACC_PUBLIC)
-  PHP_ME(UserTypeValue, get, arginfo_name, ZEND_ACC_PUBLIC)
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(UserTypeValue, __construct, arginfo_construct_types, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, type,        arginfo_type_user_type,  ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, values,      arginfo_array,           ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, set,         arginfo_set,             ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, get,         arginfo_get,             ZEND_ACC_PUBLIC)
   /* Countable */
-  PHP_ME(UserTypeValue, count, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, count,       arginfo_count,           ZEND_ACC_PUBLIC)
   /* Iterator */
-  PHP_ME(UserTypeValue, current, arginfo_none, ZEND_ACC_PUBLIC)
-  PHP_ME(UserTypeValue, key, arginfo_none, ZEND_ACC_PUBLIC)
-  PHP_ME(UserTypeValue, next, arginfo_none, ZEND_ACC_PUBLIC)
-  PHP_ME(UserTypeValue, valid, arginfo_none, ZEND_ACC_PUBLIC)
-  PHP_ME(UserTypeValue, rewind, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, current,     arginfo_mixed,           ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, key,         arginfo_key_maybe_string,ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, next,        arginfo_none,            ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, valid,       arginfo_bool,            ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, rewind,      arginfo_none,            ZEND_ACC_PUBLIC)
+#else
+  PHP_ME(UserTypeValue, __construct, arginfo_construct_types, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, type,        arginfo_none,            ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, values,      arginfo_none,            ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, set,         arginfo_set,             ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, get,         arginfo_get,             ZEND_ACC_PUBLIC)
+  /* Countable */
+  PHP_ME(UserTypeValue, count,       arginfo_none,            ZEND_ACC_PUBLIC)
+  /* Iterator */
+  PHP_ME(UserTypeValue, current,     arginfo_none,            ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, key,         arginfo_none,            ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, next,        arginfo_none,            ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, valid,       arginfo_none,            ZEND_ACC_PUBLIC)
+  PHP_ME(UserTypeValue, rewind,      arginfo_none,            ZEND_ACC_PUBLIC)
+#endif
   PHP_FE_END
 };
 

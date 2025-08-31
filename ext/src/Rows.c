@@ -373,6 +373,51 @@ PHP_METHOD(Rows, first)
   }
 }
 
+#if PHP_VERSION_ID >= 80100
+/* Typed arginfo for PHP 8.1+ */
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_none, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_count, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_bool, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_mixed, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_key_maybe_long, 0, 0, MAY_BE_LONG|MAY_BE_NULL)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_string_or_null, 0, 0, MAY_BE_STRING|MAY_BE_NULL)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_rows_next_page, 0, 0, IS_OBJECT, 0)
+  ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, timeout, IS_MIXED, 1, "null")
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_next_page_async, 0, 0, MAY_BE_OBJECT)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_offset_exists, 0, 1, _IS_BOOL, 0)
+  ZEND_ARG_INFO(0, offset)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_offset_get, 0, 1, IS_MIXED, 0)
+  ZEND_ARG_INFO(0, offset)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_offset_set, 0, 2, IS_VOID, 0)
+  ZEND_ARG_INFO(0, offset)
+  ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_offset_unset, 0, 1, IS_VOID, 0)
+  ZEND_ARG_INFO(0, offset)
+ZEND_END_ARG_INFO()
+#else
+/* Legacy arginfo for older PHP versions */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_none, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
@@ -388,8 +433,27 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timeout, 0, ZEND_RETURN_VALUE, 1)
   ZEND_ARG_INFO(0, timeout)
 ZEND_END_ARG_INFO()
+#endif
 
 static zend_function_entry php_driver_rows_methods[] = {
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Rows, __construct,      arginfo_none,          ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+  PHP_ME(Rows, count,            arginfo_count,         ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, rewind,           arginfo_none,          ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, current,          arginfo_mixed,         ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, key,              arginfo_key_maybe_long,ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, next,             arginfo_none,          ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, valid,            arginfo_bool,          ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, offsetExists,     arginfo_offset_exists, ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, offsetGet,        arginfo_offset_get,    ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, offsetSet,        arginfo_offset_set,    ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, offsetUnset,      arginfo_offset_unset,  ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, isLastPage,       arginfo_bool,          ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, nextPage,         arginfo_rows_next_page,ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, nextPageAsync,    arginfo_next_page_async,ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, pagingStateToken, arginfo_string_or_null,ZEND_ACC_PUBLIC)
+  PHP_ME(Rows, first,            arginfo_mixed,         ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Rows, __construct,      arginfo_none,    ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
   PHP_ME(Rows, count,            arginfo_none,    ZEND_ACC_PUBLIC)
   PHP_ME(Rows, rewind,           arginfo_none,    ZEND_ACC_PUBLIC)
@@ -406,6 +470,7 @@ static zend_function_entry php_driver_rows_methods[] = {
   PHP_ME(Rows, nextPageAsync,    arginfo_none,    ZEND_ACC_PUBLIC)
   PHP_ME(Rows, pagingStateToken, arginfo_none,    ZEND_ACC_PUBLIC)
   PHP_ME(Rows, first,            arginfo_none,    ZEND_ACC_PUBLIC)
+#endif
   PHP_FE_END
 };
 

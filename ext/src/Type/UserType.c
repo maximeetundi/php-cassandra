@@ -231,6 +231,31 @@ PHP_METHOD(TypeUserType, create)
   }
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_none, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_with_name, 0, 1, PHP_DRIVER_NAMESPACE "\\Type\\UserType", 0)
+  ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_nullable_string, 0, 0, MAY_BE_STRING|MAY_BE_NULL)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_with_keyspace, 0, 1, PHP_DRIVER_NAMESPACE "\\Type\\UserType", 0)
+  ZEND_ARG_TYPE_INFO(0, keyspace, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_array, 0, 0, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_string, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_create_udt_value, 0, 0, PHP_DRIVER_NAMESPACE "\\UserTypeValue", 0)
+  ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+#else
 ZEND_BEGIN_ARG_INFO_EX(arginfo_none, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
@@ -245,8 +270,19 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_keyspace, 0, ZEND_RETURN_VALUE, 1)
   ZEND_ARG_INFO(0, keyspace)
 ZEND_END_ARG_INFO()
+#endif
 
 static zend_function_entry php_driver_type_user_type_methods[] = {
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(TypeUserType, __construct,  arginfo_none,            ZEND_ACC_PRIVATE)
+  PHP_ME(TypeUserType, withName,     arginfo_with_name,       ZEND_ACC_PUBLIC)
+  PHP_ME(TypeUserType, name,         arginfo_nullable_string, ZEND_ACC_PUBLIC)
+  PHP_ME(TypeUserType, withKeyspace, arginfo_with_keyspace,   ZEND_ACC_PUBLIC)
+  PHP_ME(TypeUserType, keyspace,     arginfo_nullable_string, ZEND_ACC_PUBLIC)
+  PHP_ME(TypeUserType, __toString,   arginfo_string,          ZEND_ACC_PUBLIC)
+  PHP_ME(TypeUserType, types,        arginfo_array,           ZEND_ACC_PUBLIC)
+  PHP_ME(TypeUserType, create,       arginfo_create_udt_value,ZEND_ACC_PUBLIC)
+#else
   PHP_ME(TypeUserType, __construct,  arginfo_none,     ZEND_ACC_PRIVATE)
   PHP_ME(TypeUserType, withName,     arginfo_name,     ZEND_ACC_PUBLIC)
   PHP_ME(TypeUserType, name,         arginfo_none,     ZEND_ACC_PUBLIC)
@@ -255,6 +291,7 @@ static zend_function_entry php_driver_type_user_type_methods[] = {
   PHP_ME(TypeUserType, __toString,   arginfo_none,     ZEND_ACC_PUBLIC)
   PHP_ME(TypeUserType, types,        arginfo_none,     ZEND_ACC_PUBLIC)
   PHP_ME(TypeUserType, create,       arginfo_value,    ZEND_ACC_PUBLIC)
+#endif
   PHP_FE_END
 };
 
