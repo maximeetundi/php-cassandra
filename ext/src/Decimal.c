@@ -517,7 +517,11 @@ php_driver_decimal_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
   *table = NULL;
   *n = 0;
   #if PHP_VERSION_ID >= 80000
+  #if PHP_VERSION_ID >= 80000
   return zend_std_get_properties(object);
+#else
+  return zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
+#endif
 #else
   return zend_std_get_properties(object TSRMLS_CC);
 #endif
@@ -533,7 +537,11 @@ php_driver_decimal_properties(zval *object TSRMLS_DC)
   php5to7_zval scale;
 
   php_driver_numeric *self = PHP_DRIVER_GET_NUMERIC(object);
-  HashTable         *props = zend_std_get_properties(object TSRMLS_CC);
+  #if PHP_VERSION_ID >= 80000
+  HashTable *props = zend_std_get_properties(object);
+#else
+  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
+#endif
 
   type = php_driver_type_scalar(CASS_VALUE_TYPE_DECIMAL TSRMLS_CC);
   PHP5TO7_ZEND_HASH_UPDATE(props, "type", sizeof("type"), PHP5TO7_ZVAL_MAYBE_P(type), sizeof(zval));
@@ -551,6 +559,7 @@ php_driver_decimal_properties(zval *object TSRMLS_DC)
   return props;
 }
 
+#if PHP_VERSION_ID < 80000
 static int
 php_driver_decimal_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 {
@@ -598,6 +607,7 @@ php_driver_decimal_cast(zval *object, zval *retval, int type TSRMLS_DC)
   return SUCCESS;
 }
 
+#if PHP_VERSION_ID < 80000
 static void
 php_driver_decimal_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
@@ -605,9 +615,14 @@ php_driver_decimal_free(php5to7_zend_object_free *object TSRMLS_DC)
 
   mpz_clear(self->data.decimal.value);
 
+  #if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
+#endif
 
 static php5to7_zend_object
 php_driver_decimal_new(zend_class_entry *ce TSRMLS_DC)
@@ -619,7 +634,17 @@ php_driver_decimal_new(zend_class_entry *ce TSRMLS_DC)
   self->data.decimal.scale = 0;
   mpz_init(self->data.decimal.value);
 
-  PHP5TO7_ZEND_OBJECT_INIT_EX(numeric, decimal, self, ce);
+  #if PHP_VERSION_ID >= 80000
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_decimal_handlers.std;
+  return &self->std;
+#else
+  zend_object_std_init(&self->zval, ce);
+  object_properties_init(&self->zval, ce);
+  self->zval.handlers = &php_driver_decimal_handlers;
+  return &self->zval;
+#endif
 }
 
 void php_driver_define_Decimal(TSRMLS_D)

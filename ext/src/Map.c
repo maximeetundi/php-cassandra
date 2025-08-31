@@ -459,7 +459,11 @@ php_driver_map_gc(zend_object *object, zval **table, int *n)
   *table = NULL;
   *n = 0;
   #if PHP_VERSION_ID >= 80000
+  #if PHP_VERSION_ID >= 80000
   return zend_std_get_properties(object);
+#else
+  return zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
+#endif
 #else
   return zend_std_get_properties(object TSRMLS_CC);
 #endif
@@ -469,15 +473,29 @@ php_driver_map_gc(zend_object *object, zval **table, int *n)
 static HashTable *
 php_driver_map_properties(zend_object *object)
 #else
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_map_properties(zend_object *object)
+{
+  zval obj_zval;
+  ZVAL_OBJ(&obj_zval, object);
+  // Function body will be updated below
+#else
 static HashTable *
 php_driver_map_properties(zval *object TSRMLS_DC)
+{
+#endif
 #endif
 {
   php5to7_zval keys;
   php5to7_zval values;
 
   php_driver_map *self = PHP_DRIVER_GET_MAP(object);
-  HashTable     *props = zend_std_get_properties(object TSRMLS_CC);
+  #if PHP_VERSION_ID >= 80000
+  HashTable *props = zend_std_get_properties(object);
+#else
+  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
+#endif
 
 
   PHP5TO7_ZEND_HASH_UPDATE(props,
@@ -500,6 +518,7 @@ php_driver_map_properties(zval *object TSRMLS_DC)
   return props;
 }
 
+#if PHP_VERSION_ID < 80000
 static int
 php_driver_map_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 {
@@ -562,6 +581,7 @@ php_driver_map_hash_value(zval *obj TSRMLS_DC)
   return hashv;
 }
 
+#if PHP_VERSION_ID < 80000
 static void
 php_driver_map_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
@@ -577,7 +597,11 @@ php_driver_map_free(php5to7_zend_object_free *object TSRMLS_DC)
 
   PHP5TO7_ZVAL_MAYBE_DESTROY(self->type);
 
+  #if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 
@@ -591,7 +615,17 @@ php_driver_map_new(zend_class_entry *ce TSRMLS_DC)
   self->dirty = 1;
   PHP5TO7_ZVAL_UNDEF(self->type);
 
-  PHP5TO7_ZEND_OBJECT_INIT(map, self, ce);
+  #if PHP_VERSION_ID >= 80000
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_map_handlers.std;
+  return &self->std;
+#else
+  zend_object_std_init(&self->zval, ce);
+  object_properties_init(&self->zval, ce);
+  self->zval.handlers = &php_driver_map_handlers;
+  return &self->zval;
+#endif
 }
 
 void php_driver_define_Map(TSRMLS_D)

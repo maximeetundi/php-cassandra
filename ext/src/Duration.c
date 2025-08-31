@@ -229,11 +229,25 @@ static php_driver_value_handlers php_driver_duration_handlers;
 static HashTable *
 php_driver_duration_properties(zend_object *object)
 #else
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_duration_properties(zend_object *object)
+{
+  zval obj_zval;
+  ZVAL_OBJ(&obj_zval, object);
+  // Function body will be updated below
+#else
 static HashTable *
 php_driver_duration_properties(zval *object TSRMLS_DC)
+{
+#endif
 #endif
 {
-  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+  #if PHP_VERSION_ID >= 80000
+  HashTable *props = zend_std_get_properties(object);
+#else
+  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
+#endif
   php_driver_duration  *self = PHP_DRIVER_GET_DURATION(object);
 
   php5to7_zval wrapped_months, wrapped_days, wrapped_nanos;
@@ -250,6 +264,7 @@ php_driver_duration_properties(zval *object TSRMLS_DC)
   return props;
 }
 
+#if PHP_VERSION_ID < 80000
 static int
 php_driver_duration_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 {
@@ -282,6 +297,7 @@ php_driver_duration_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 
   return (left->nanos == right->nanos) ? 0 : 1;
 }
+#endif
 
 static unsigned
 php_driver_duration_hash_value(zval *obj TSRMLS_DC)
@@ -296,6 +312,7 @@ php_driver_duration_hash_value(zval *obj TSRMLS_DC)
   return hashv;
 }
 
+#if PHP_VERSION_ID < 80000
 static void
 php_driver_duration_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
@@ -303,15 +320,30 @@ php_driver_duration_free(php5to7_zend_object_free *object TSRMLS_DC)
 
   /* Clean up */
 
+  #if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
+#endif
 
 static php5to7_zend_object
 php_driver_duration_new(zend_class_entry *ce TSRMLS_DC)
 {
   php_driver_duration *self = PHP5TO7_ZEND_OBJECT_ECALLOC(duration, ce);
-  PHP5TO7_ZEND_OBJECT_INIT(duration, self, ce);
+  #if PHP_VERSION_ID >= 80000
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_duration_handlers.std;
+  return &self->std;
+#else
+  zend_object_std_init(&self->zval, ce);
+  object_properties_init(&self->zval, ce);
+  self->zval.handlers = &php_driver_duration_handlers;
+  return &self->zval;
+#endif
 }
 
 void php_driver_define_Duration(TSRMLS_D)
