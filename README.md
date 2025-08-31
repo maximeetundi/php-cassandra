@@ -125,6 +125,47 @@ make
 sudo make install
 ```
 
+### Installation binaire (une commande, sans compilation)
+
+Des binaires précompilés peuvent être fournis via les Releases GitHub. Utilisez les scripts suivants pour installer automatiquement le bon binaire selon votre OS, architecture et version de PHP.
+
+- Linux/macOS:
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/maximeetundi/php-cassandra-driver/main/scripts/install-binary.sh | bash
+  # ou
+  wget -qO- https://raw.githubusercontent.com/maximeetundi/php-cassandra-driver/main/scripts/install-binary.sh | bash
+  ```
+
+- Windows (PowerShell):
+  ```powershell
+  irm https://raw.githubusercontent.com/maximeetundi/php-cassandra-driver/main/scripts/install-binary.ps1 | iex
+  ```
+
+Ces scripts:
+
+- détectent `extension_dir` et `php.ini`
+- téléchargent l’asset correspondant à votre plateforme depuis la dernière Release
+- installent `cassandra.so` (Linux/macOS) ou `php_cassandra.dll` (Windows)
+- ajoutent l’entrée `extension=` dans `php.ini` si nécessaire
+
+Schéma de nommage attendu des assets Release:
+
+- Linux: `cassandra-linux-<arch>-php<majmin>-<nts|ts>.so`
+- macOS: `cassandra-macos-<arch>-php<majmin>-<nts|ts>.so`
+- Windows: `php_cassandra-windows-<arch>-php<majmin>-<nts|ts>.dll`
+
+Exemples:
+
+- `cassandra-linux-x86_64-php83-nts.so`
+- `cassandra-macos-arm64-php83-nts.so`
+- `php_cassandra-windows-x86_64-php83-ts.dll`
+
+Validation:
+
+```bash
+php -m | grep -i cassandra
+```
+
 ## Configuration
 
 Ajoutez la configuration suivante à votre `php.ini` :
@@ -148,18 +189,76 @@ Ajoutez la configuration suivante à votre `php.ini` :
 
 ```php
 <?php
-$cluster   = Cassandra::cluster()
-                 ->withContactPoints('127.0.0.1')
-                 ->build();
+// Construction via les classes Builder (API PHP 8.3+)
+$builder = new Cassandra\Cluster\Builder();
+$builder->withContactPoints('127.0.0.1');
+$cluster = $builder->build();
+
 $session   = $cluster->connect('system_schema');
-$statement = new Cassandra\SimpleStatement("SELECT * FROM keyspaces");
+$statement = new Cassandra\SimpleStatement('SELECT keyspace_name, replication FROM system_schema.keyspaces');
 $result    = $session->execute($statement);
 
 foreach ($result as $row) {
     printf("%-30s %s\n", $row['keyspace_name'], $row['replication']);
 }
+
+// Recommandé: fermer proprement la session en fin de script
+if (method_exists($session, 'close')) {
+    $session->close();
+}
 ?>
 ```
+
+## Connexion CloudClusters (SSL + Auth)
+
+Exemple minimal avec certificats client et authentification utilisateur/mot de passe. Les chemins pointent vers les fichiers du dossier `cloudclustersio/cassandra/` du dépôt.
+
+```php
+$host = 'cassandra-XXXXXX-0.cloudclusters.net';
+$port = 10014; // adapté à votre instance
+
+$certPath = __DIR__ . '/cloudclustersio/cassandra/user.cer.pem';
+$keyPath  = __DIR__ . '/cloudclustersio/cassandra/user.key.pem';
+
+$username = getenv('CASSANDRA_USERNAME') ?: 'admin'; // ou définissez via votre CI/terminal
+$password = getenv('CASSANDRA_PASSWORD') ?: '<votre_mot_de_passe>'; 
+
+$sslBuilder = new Cassandra\SSLOptions\Builder();
+$sslBuilder->withClientCert($certPath);
+$sslBuilder->withPrivateKey($keyPath);
+// Si un CA dédié est fourni par le provider:
+// $sslBuilder->withTrustedCerts(__DIR__ . '/cloudclustersio/cassandra/ca.pem');
+$ssl = $sslBuilder->build();
+
+$builder = new Cassandra\Cluster\Builder();
+$builder->withContactPoints($host);
+$builder->withPort($port);
+$builder->withSSL($ssl);
+$builder->withCredentials($username, $password);
+$cluster = $builder->build();
+
+$session = $cluster->connect();
+echo "OK connecté\n";
+
+// ... vos requêtes ...
+
+if (method_exists($session, 'close')) {
+    $session->close();
+}
+```
+
+## Dépannage
+
+- __Authentification requise__: erreur « Authentication required but no auth provider set »
+  - Appears si `withCredentials()` n'est pas configuré. Ajoutez `withCredentials($username, $password)`.
+- __SSL/Certificats__:
+  - Assurez-vous que `user.cer.pem` et `user.key.pem` existent et sont lisibles.
+  - Si le provider fournit un CA, utilisez `withTrustedCerts($caPath)`.
+  - Pour diagnostiquer uniquement (non production): `withVerifyFlags(Cassandra::VERIFY_NONE)`.
+- __Segmentation fault à la fin du script__:
+  - Fermez explicitement la session: `if (method_exists($session, 'close')) { $session->close(); }`.
+  - Utilisez la dernière version de ce fork (compatibilité PHP 8.3).
+  - Ouvrez une issue avec version PHP, version de l'extension et la sortie d'erreur si le problème persiste.
 
 ## Documentation complète
 

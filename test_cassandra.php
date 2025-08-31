@@ -9,7 +9,7 @@ if (!extension_loaded('cassandra')) {
 printf("Extension cassandra chargée. Version: %s\n\n", phpversion('cassandra'));
 
 // 2) Paramètres de connexion (depuis cloudclustersio/cassandra/cassandra.txt)
-$host = 'cassandra-201683-0.cloudclusters.net';
+$host = 'cassandra-123456-0.cloudclusters.net';
 $port = 10014;
 
 // 3) Chemins des certificats/clé (PEM)
@@ -17,8 +17,8 @@ $certPath = __DIR__ . '/cloudclustersio/cassandra/user.cer.pem';
 $keyPath  = __DIR__ . '/cloudclustersio/cassandra/user.key.pem';
 
 // 3b) Identifiants (si requis) via variables d'environnement
-$username = getenv('CASSANDRA_USERNAME') ?: 'admin';
-$password = getenv('CASSANDRA_PASSWORD') ?: 'aa5564@#';
+$username = getenv('CASSANDRA_USERNAME') ?: 'user';
+$password = getenv('CASSANDRA_PASSWORD') ?: 'password';
 
 // Vérifications de base
 foreach ([$certPath, $keyPath] as $p) {
@@ -27,6 +27,9 @@ foreach ([$certPath, $keyPath] as $p) {
         exit(1);
     }
 }
+
+// Pré-déclarer la variable pour pouvoir la fermer dans finally
+$session = null;
 
 try {
     // 4) Options SSL: cert client + clé privée
@@ -66,6 +69,11 @@ try {
     fwrite(STDERR, "Erreur lors de la connexion: " . $e->getMessage() . "\n");
     if (method_exists($e, 'getTraceAsString')) {
         fwrite(STDERR, $e->getTraceAsString() . "\n");
+    }
+} finally {
+    // Fermer proprement la session pour éviter un segfault à la fin du script
+    if ($session !== null && method_exists($session, 'close')) {
+        try { $session->close(); } catch (Throwable $t) { /* ignore */ }
     }
 }
 ?>

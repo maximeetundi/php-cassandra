@@ -1,4 +1,0 @@
-Host: redis-201685-0.cloudclusters.net  
-Port: 10021  
-IP Address: 69.30.235.142  
-CA Certificate: C:\Users\z\Music\engine-master_1\engine-master\cloudclustersio\redis\ca.crt
