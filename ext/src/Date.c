@@ -103,7 +103,7 @@ PHP_METHOD(Date, toDateTime)
   datetime_obj = zend_object_store_get_object(datetime TSRMLS_CC);
 #endif
 
-  str_len = spprintf(&str, 0, "%lld",
+  str_len = spprintf(&str, 0, "%" LL_FORMAT "d",
                      cass_date_time_to_epoch(self->date,
                                              time_obj != NULL ? time_obj->time : 0));
   php_date_initialize(datetime_obj, str, str_len, "U", NULL, 0 TSRMLS_CC);
@@ -124,11 +124,19 @@ PHP_METHOD(Date, fromDateTime)
     return;
   }
 
+#if PHP_VERSION_ID >= 80000
+  zend_call_method_with_0_params(Z_OBJ_P(zdatetime),
+                                 php_date_get_date_ce(),
+                                 NULL,
+                                 "gettimestamp",
+                                 &retval);
+#else
   zend_call_method_with_0_params(PHP5TO7_ZVAL_MAYBE_ADDR_OF(zdatetime),
                                  php_date_get_date_ce(),
                                  NULL,
                                  "gettimestamp",
                                  &retval);
+#endif
 
   if (!PHP5TO7_ZVAL_IS_UNDEF(retval) &&
       Z_TYPE_P(PHP5TO7_ZVAL_MAYBE_P(retval)) == IS_LONG) {
@@ -154,7 +162,7 @@ PHP_METHOD(Date, __toString)
 
   self = PHP_DRIVER_GET_DATE(getThis());
 
-  spprintf(&ret, 0, PHP_DRIVER_NAMESPACE "\\Date(seconds=%lld)", cass_date_time_to_epoch(self->date, 0));
+  spprintf(&ret, 0, PHP_DRIVER_NAMESPACE "\\Date(seconds=%" LL_FORMAT "d)", cass_date_time_to_epoch(self->date, 0));
   PHP5TO7_RETVAL_STRING(ret);
   efree(ret);
 }

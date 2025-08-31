@@ -240,7 +240,12 @@ static HashTable *
 php_driver_default_column_properties(zval *object TSRMLS_DC)
 #endif
 {
-  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+  HashTable *props =
+#if PHP_VERSION_ID >= 80000
+    zend_std_get_properties(object);
+#else
+    zend_std_get_properties(object TSRMLS_CC);
+#endif
 
   return props;
 }
@@ -254,6 +259,23 @@ php_driver_default_column_compare(zval *obj1, zval *obj2 TSRMLS_DC)
   return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj1);
 }
 
+#if PHP_VERSION_ID >= 80000
+static void php_driver_default_column_free_obj(zend_object *object)
+{
+  php_driver_column *self = php_driver_column_object_fetch(object);
+
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->name);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->type);
+
+  if (self->schema) {
+    php_driver_del_ref(&self->schema);
+    self->schema = NULL;
+  }
+  self->meta = NULL;
+
+  zend_object_std_dtor(object);
+}
+#else
 static void
 php_driver_default_column_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
@@ -271,6 +293,7 @@ php_driver_default_column_free(php5to7_zend_object_free *object TSRMLS_DC)
   zend_object_std_dtor(&self->zval TSRMLS_CC);
   PHP5TO7_MAYBE_EFREE(self);
 }
+#endif
 
 static php5to7_zend_object
 php_driver_default_column_new(zend_class_entry *ce TSRMLS_DC)
@@ -303,6 +326,13 @@ void php_driver_define_DefaultColumn(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_default_column_handlers.get_gc = php_driver_type_default_column_gc;
 #endif
+  /* compare_objects was removed in PHP 8 */
+#if PHP_VERSION_ID < 80000
   php_driver_default_column_handlers.compare_objects = php_driver_default_column_compare;
+#endif
+  /* Set free_obj for PHP 8+ */
+#if PHP_VERSION_ID >= 80000
+  php_driver_default_column_handlers.free_obj = php_driver_default_column_free_obj;
+#endif
   php_driver_default_column_handlers.clone_obj = NULL;
 }
