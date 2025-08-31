@@ -197,6 +197,10 @@ PHP_METHOD(Type, map)
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_string, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
+/* Scalar static factories use this: no params, returns Type */
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_none, 0, 0, PHP_DRIVER_NAMESPACE "\\Type", 0)
+ZEND_END_ARG_INFO()
+
 /* Return Type for factory methods that take variadic params */
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_types_return_type, 0, 0, PHP_DRIVER_NAMESPACE "\\Type", 0)
   ZEND_ARG_INFO(0, types)
