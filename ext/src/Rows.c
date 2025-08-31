@@ -375,6 +375,10 @@ PHP_METHOD(Rows, first)
 
 #if PHP_VERSION_ID >= 80100
 /* Typed arginfo for PHP 8.1+ */
+/* Constructors cannot have return types; use separate untyped arginfo */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctor_none, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_none, 0, 0, IS_VOID, 0)
 ZEND_END_ARG_INFO()
 
@@ -437,7 +441,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry php_driver_rows_methods[] = {
 #if PHP_VERSION_ID >= 80100
-  PHP_ME(Rows, __construct,      arginfo_none,          ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+  PHP_ME(Rows, __construct,      arginfo_ctor_none,     ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
   PHP_ME(Rows, count,            arginfo_count,         ZEND_ACC_PUBLIC)
   PHP_ME(Rows, rewind,           arginfo_none,          ZEND_ACC_PUBLIC)
   PHP_ME(Rows, current,          arginfo_mixed,         ZEND_ACC_PUBLIC)
