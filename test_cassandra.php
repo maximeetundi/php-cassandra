@@ -1,51 +1,63 @@
 <?php
-// Vérifier si l'extension Cassandra est chargée
+// Test de l'extension et de la connexion Cassandra (CloudClusters, SSL client cert)
+
+// 1) Vérifier l'extension
 if (!extension_loaded('cassandra')) {
-    die("L'extension PHP Cassandra n'est pas chargée. Veuillez vérifier votre installation.\n");
+    fwrite(STDERR, "[ERREUR] L'extension PHP cassandra n'est pas chargée.\n");
+    exit(1);
 }
+printf("Extension cassandra chargée. Version: %s\n\n", phpversion('cassandra'));
 
-echo "Extension Cassandra chargée avec succès. Version: " . phpversion('cassandra') . "\n\n";
-
-// Informations de connexion depuis votre fichier de configuration
+// 2) Paramètres de connexion (depuis cloudclustersio/cassandra/cassandra.txt)
 $host = 'cassandra-201683-0.cloudclusters.net';
 $port = 10014;
 
-// Chemins des certificats (ajustés pour votre répertoire actuel)
+// 3) Chemins des certificats/clé (PEM)
 $certPath = __DIR__ . '/cloudclustersio/cassandra/user.cer.pem';
-$keyPath = __DIR__ . '/cloudclustersio/cassandra/user.key.pem';
+$keyPath  = __DIR__ . '/cloudclustersio/cassandra/user.key.pem';
 
-echo "Tentative de connexion à Cassandra sur $host:$port\n";
-echo "Utilisation du certificat: $certPath\n";
-echo "Utilisation de la clé: $keyPath\n\n";
+// Vérifications de base
+foreach ([$certPath, $keyPath] as $p) {
+    if (!is_file($p)) {
+        fwrite(STDERR, "[ERREUR] Fichier introuvable: $p\n");
+        exit(1);
+    }
+}
 
 try {
-    // Créer un objet cluster
-    $cluster = Cassandra::cluster()
-                 ->withContactPoints($host)
-                 ->withPort($port)
-                 ->withSSL(new Cassandra\SSLOptions\Builder()
-                     ->withClientCert($certPath)
-                     ->withPrivateKey($keyPath, '')  // Pas de mot de passe pour la clé privée
-                     ->withVerifyFlags(Cassandra::VERIFY_NONE)  // Pour le test, désactiver la vérification
-                     ->build())
-                 ->build();
-    
-    echo "Objet cluster créé avec succès.\n";
+    // 4) Options SSL: cert client + clé privée
+    $sslBuilder = Cassandra\SSLOptions::builder()
+        ->withClientCert($certPath)
+        ->withPrivateKey($keyPath);
+        // Facultatif: si vous avez un certificat CA séparé, utilisez ->withTrustedCerts($caPath)
+
+    // 5) Construction du cluster
+    $cluster = Cassandra\Cluster::builder()
+        ->withContactPoints($host)
+        ->withPort($port)
+        ->withSSL($sslBuilder->build())
+        ->build();
+
+    echo "Connexion au cluster...\n";
     
     // Tenter d'établir une session
     $session = $cluster->connect();
     echo "Connexion établie avec succès!\n";
     
     // Exécuter une requête simple pour tester
-    $statement = new Cassandra\SimpleStatement("SELECT release_version FROM system.local");
+    $statement = new Cassandra\SimpleStatement('SELECT release_version FROM system.local');
     $result = $session->execute($statement);
-    
-    foreach ($result as $row) {
-        echo "Version de Cassandra: " . $row['release_version'] . "\n";
+    $row = $result->first();
+    if ($row && isset($row['release_version'])) {
+        printf("Version de Cassandra: %s\n", (string) $row['release_version']);
+    } else {
+        echo "Aucune version retournée par system.local.\n";
     }
-    
-} catch (Exception $e) {
-    echo "Erreur lors de la connexion: " . $e->getMessage() . "\n";
-    echo "Trace: " . $e->getTraceAsString() . "\n";
+
+} catch (Throwable $e) {
+    fwrite(STDERR, "Erreur lors de la connexion: " . $e->getMessage() . "\n");
+    if (method_exists($e, 'getTraceAsString')) {
+        fwrite(STDERR, $e->getTraceAsString() . "\n");
+    }
 }
 ?>
