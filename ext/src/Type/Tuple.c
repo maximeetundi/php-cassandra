@@ -138,7 +138,8 @@ PHP_METHOD(TypeTuple, create)
 }
 
 #if PHP_VERSION_ID >= 80100
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_none, 0, 0, IS_VOID, 0)
+/* Constructors cannot have return types; use separate untyped arginfo */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctor_none, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_string, 0, 0, IS_STRING, 0)
@@ -161,7 +162,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry php_driver_type_tuple_methods[] = {
 #if PHP_VERSION_ID >= 80100
-  PHP_ME(TypeTuple, __construct, arginfo_none,        ZEND_ACC_PRIVATE)
+  PHP_ME(TypeTuple, __construct, arginfo_ctor_none,   ZEND_ACC_PRIVATE)
   PHP_ME(TypeTuple, name,        arginfo_string,      ZEND_ACC_PUBLIC)
   PHP_ME(TypeTuple, __toString,  arginfo_string,      ZEND_ACC_PUBLIC)
   PHP_ME(TypeTuple, types,       arginfo_array,       ZEND_ACC_PUBLIC)

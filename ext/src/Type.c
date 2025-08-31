@@ -193,6 +193,24 @@ PHP_METHOD(Type, map)
   RETURN_ZVAL(PHP5TO7_ZVAL_MAYBE_P(ztype), 0, 1);
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_string, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+/* Return Type for factory methods that take variadic params */
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_types_return_type, 0, 0, PHP_DRIVER_NAMESPACE "\\Type", 0)
+  ZEND_ARG_INFO(0, types)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_type, 0, 1, PHP_DRIVER_NAMESPACE "\\Type", 0)
+  PHP_DRIVER_NAMESPACE_ZEND_ARG_OBJ_INFO(0, type, Type, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_map, 0, 2, PHP_DRIVER_NAMESPACE "\\Type", 0)
+  PHP_DRIVER_NAMESPACE_ZEND_ARG_OBJ_INFO(0, keyType,   Type, 0)
+  PHP_DRIVER_NAMESPACE_ZEND_ARG_OBJ_INFO(0, valueType, Type, 0)
+ZEND_END_ARG_INFO()
+#else
 ZEND_BEGIN_ARG_INFO_EX(arginfo_none, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
@@ -208,19 +226,30 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_map, 0, ZEND_RETURN_VALUE, 2)
   PHP_DRIVER_NAMESPACE_ZEND_ARG_OBJ_INFO(0, keyType,   Type, 0)
   PHP_DRIVER_NAMESPACE_ZEND_ARG_OBJ_INFO(0, valueType, Type, 0)
 ZEND_END_ARG_INFO()
+#endif
 
 static zend_function_entry php_driver_type_methods[] = {
+#if PHP_VERSION_ID >= 80100
+  PHP_ABSTRACT_ME(Type, name,       arginfo_string)
+  PHP_ABSTRACT_ME(Type, __toString, arginfo_string)
+#else
   PHP_ABSTRACT_ME(Type, name,       arginfo_none)
   PHP_ABSTRACT_ME(Type, __toString, arginfo_none)
+#endif
 
 #define XX_SCALAR_METHOD(name, _) PHP_ME(Type, name, arginfo_none, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
   PHP_DRIVER_SCALAR_TYPES_MAP(XX_SCALAR_METHOD)
 #undef XX_SCALAR_METHOD
-  PHP_ME(Type, collection, arginfo_type,  ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
-  PHP_ME(Type, set,        arginfo_type,  ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
-  PHP_ME(Type, map,        arginfo_map,   ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
-  PHP_ME(Type, tuple,      arginfo_types, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
-  PHP_ME(Type, userType,   arginfo_types, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
+  PHP_ME(Type, collection, arginfo_type,         ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
+  PHP_ME(Type, set,        arginfo_type,         ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
+  PHP_ME(Type, map,        arginfo_map,          ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Type, tuple,      arginfo_types_return_type,  ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
+  PHP_ME(Type, userType,   arginfo_types_return_type,  ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
+#else
+  PHP_ME(Type, tuple,      arginfo_types,        ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
+  PHP_ME(Type, userType,   arginfo_types,        ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_FINAL)
+#endif
   PHP_FE_END
 };
 

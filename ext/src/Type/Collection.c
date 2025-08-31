@@ -110,7 +110,8 @@ PHP_METHOD(TypeCollection, create)
 }
 
 #if PHP_VERSION_ID >= 80100
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_none, 0, 0, IS_VOID, 0)
+/* Constructors cannot have return types; use separate untyped arginfo */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctor_none, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_string, 0, 0, IS_STRING, 0)
@@ -133,7 +134,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry php_driver_type_collection_methods[] = {
 #if PHP_VERSION_ID >= 80100
-  PHP_ME(TypeCollection, __construct, arginfo_none,              ZEND_ACC_PRIVATE)
+  PHP_ME(TypeCollection, __construct, arginfo_ctor_none,         ZEND_ACC_PRIVATE)
   PHP_ME(TypeCollection, name,        arginfo_string,            ZEND_ACC_PUBLIC)
   PHP_ME(TypeCollection, valueType,   arginfo_value_type,        ZEND_ACC_PUBLIC)
   PHP_ME(TypeCollection, __toString,  arginfo_string,            ZEND_ACC_PUBLIC)
