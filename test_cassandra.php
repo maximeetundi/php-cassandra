@@ -16,6 +16,10 @@ $port = 10014;
 $certPath = __DIR__ . '/cloudclustersio/cassandra/user.cer.pem';
 $keyPath  = __DIR__ . '/cloudclustersio/cassandra/user.key.pem';
 
+// 3b) Identifiants (si requis) via variables d'environnement
+$username = getenv('CASSANDRA_USERNAME') ?: 'admin';
+$password = getenv('CASSANDRA_PASSWORD') ?: 'aa5564@#';
+
 // Vérifications de base
 foreach ([$certPath, $keyPath] as $p) {
     if (!is_file($p)) {
@@ -37,6 +41,9 @@ try {
     $clusterBuilder->withContactPoints($host);
     $clusterBuilder->withPort($port);
     $clusterBuilder->withSSL($ssl);
+    if ($username !== '' && $password !== '') {
+        $clusterBuilder->withCredentials($username, $password);
+    }
     $cluster = $clusterBuilder->build();
 
     echo "Connexion au cluster...\n";
