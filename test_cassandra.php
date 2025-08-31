@@ -26,7 +26,7 @@ foreach ([$certPath, $keyPath] as $p) {
 
 try {
     // 4) Options SSL: cert client + clé privée
-    $sslBuilder = Cassandra\SSLOptions::builder();
+    $sslBuilder = new Cassandra\SSLOptions\Builder();
     $sslBuilder->withClientCert($certPath);
     $sslBuilder->withPrivateKey($keyPath);
     // Facultatif: si vous avez un certificat CA séparé, utilisez ->withTrustedCerts($caPath)
