@@ -110,7 +110,11 @@ static HashTable *
 php_driver_future_rows_properties(zval *object TSRMLS_DC)
 #endif
 {
+#if PHP_VERSION_ID >= 80000
+  HashTable *props = zend_std_get_properties(object);
+#else
   HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+#endif
 
   return props;
 }
@@ -121,7 +125,7 @@ php_driver_future_rows_compare(zval *obj1, zval *obj2 TSRMLS_DC)
   if (Z_OBJCE_P(obj1) != Z_OBJCE_P(obj2))
     return 1; /* different classes */
 
-  return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj1);
+  return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj2);
 }
 
 static void
@@ -170,6 +174,10 @@ void php_driver_define_FutureRows(TSRMLS_D)
 
   memcpy(&php_driver_future_rows_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
   php_driver_future_rows_handlers.get_properties = php_driver_future_rows_properties;
+#if PHP_VERSION_ID < 80000
   php_driver_future_rows_handlers.compare_objects = php_driver_future_rows_compare;
+#else
+  /* PHP 8+: do not set compare_objects; use default */
+#endif
   php_driver_future_rows_handlers.clone_obj = NULL;
 }
