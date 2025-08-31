@@ -597,7 +597,11 @@ static HashTable *
 php_driver_default_materialized_view_properties(zval *object TSRMLS_DC)
 #endif
 {
+  #if PHP_VERSION_ID >= 80000
+  HashTable *props = zend_std_get_properties(object);
+  #else
   HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+  #endif
 
   return props;
 }
@@ -630,7 +634,11 @@ php_driver_default_materialized_view_free(php5to7_zend_object_free *object TSRML
   }
   self->meta = NULL;
 
+  #if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+  #else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+  #endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 
