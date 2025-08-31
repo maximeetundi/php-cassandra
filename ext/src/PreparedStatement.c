@@ -24,7 +24,8 @@ PHP_METHOD(PreparedStatement, __construct)
 }
 
 #if PHP_VERSION_ID >= 80100
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_none, 0, 0, IS_VOID, 0)
+/* Constructors cannot declare a return type; use untyped arginfo */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_none, 0, 0, 0)
 ZEND_END_ARG_INFO()
 #else
 ZEND_BEGIN_ARG_INFO_EX(arginfo_none, 0, ZEND_RETURN_VALUE, 0)
