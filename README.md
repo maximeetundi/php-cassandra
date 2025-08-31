@@ -66,21 +66,62 @@ cd php-cassandra-driver
 
 #### Sous Linux/macOS
 
+1. Installation des dépendances requises :
+
 ```bash
-# Installation des dépendances
 # Sur Debian/Ubuntu :
-sudo apt-get install php8.3-dev cmake g++ libssl-dev
+sudo apt-get install php8.3-dev cmake g++ libssl-dev libuv1-dev zlib1g-dev
 
 # Sur CentOS/RHEL :
-sudo yum install php83-php-devel cmake gcc-c++ openssl-devel
+sudo yum install php83-php-devel cmake gcc-c++ openssl-devel libuv-devel zlib-devel
+```
 
-# Compilation
-mkdir build
-cd build
-cmake ..
+2. Compilation et installation automatique avec le script :
+
+```bash
+cd ext
+./install.sh
+```
+
+3. Vérifiez que l'extension est correctement installée :
+
+```bash
+php -m | grep cassandra
+```
+
+4. Si vous rencontrez des erreurs de compilation liées à PHP 8.3, vous devrez peut-être appliquer des correctifs de compatibilité :
+
+```bash
+# Correction des problèmes de compatibilité avec PHP 8.3
+# Exemple pour le fichier Blob.c
+sed -i 's/zend_std_get_properties(object TSRMLS_CC)/zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC)/g' ext/src/Blob.c
+sed -i 's/zend_object_std_dtor(&self->zval TSRMLS_CC)/zend_object_std_dtor(object TSRMLS_CC)/g' ext/src/Blob.c
+
+# Puis relancez la compilation
+./install.sh
+```
+
+### Installation manuelle des dépendances
+
+Si vous préférez compiler manuellement les dépendances :
+
+```bash
+# Clonez le dépôt
+git clone https://github.com/maximeetundi/php-cassandra-driver.git
+cd php-cassandra-driver
+
+# Compilation de la bibliothèque C++ DataStax
+mkdir -p lib/cpp-driver/build
+cd lib/cpp-driver/build
+cmake -DCMAKE_CXX_FLAGS="-fPIC" -DCASS_BUILD_STATIC=ON -DCASS_BUILD_SHARED=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCASS_USE_ZLIB=ON ..
 make
+cd ../../../
 
-# Installation
+# Compilation de l'extension PHP
+cd ext
+phpize
+LIBS="-lssl -lcrypto -lz -luv -lm -lstdc++" ./configure --with-cassandra=../lib/cpp-driver/build
+make
 sudo make install
 ```
 

@@ -597,7 +597,11 @@ void php_driver_define_Map(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_map_handlers.std.get_gc          = php_driver_map_gc;
 #endif
+  #if PHP_VERSION_ID < 80000
+
   php_driver_map_handlers.std.compare_objects = php_driver_map_compare;
+
+  #endif
   php_driver_map_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_map_ce->create_object = php_driver_map_new;
   zend_class_implements(php_driver_map_ce TSRMLS_CC, 3, spl_ce_Countable, zend_ce_iterator, zend_ce_arrayaccess);

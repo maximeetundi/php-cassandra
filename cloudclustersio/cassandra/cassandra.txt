@@ -1,0 +1,9 @@
+Host: cassandra-201683-0.cloudclusters.net
+Port: 10014
+IP Address: 69.30.235.148
+User Certificate : C:\Users\z\Music\engine-master_1\engine-master\cloudclustersio\cassandra\user.cer.pem
+User Key: C:\Users\z\Music\engine-master_1\engine-master\cloudclustersio\cassandra\user.key.pem
+Truststore: C:\Users\z\Music\engine-master_1\engine-master\cloudclustersio\cassandra\cassandra.truststore.jks
+Truststore Password: iMr6fLQv
+Keystore: C:\Users\z\Music\engine-master_1\engine-master\cloudclustersio\cassandra\cassandra.keystore.jks
+Keystore Password: iMr6fLQv

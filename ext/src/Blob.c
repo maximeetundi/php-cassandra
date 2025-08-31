@@ -113,23 +113,30 @@ static zend_function_entry php_driver_blob_methods[] = {
 static php_driver_value_handlers php_driver_blob_handlers;
 
 static HashTable *
-php_driver_blob_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
+php_driver_blob_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
+#if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
   return zend_std_get_properties(object TSRMLS_CC);
+#endif
 }
 
+#if PHP_VERSION_ID >= 80000
 static HashTable *
-php_driver_blob_properties(zval *object TSRMLS_DC)
+php_driver_blob_properties(zend_object *object)
 {
   char *hex;
   int hex_len;
   php5to7_zval type;
   php5to7_zval bytes;
 
-  php_driver_blob *self = PHP_DRIVER_GET_BLOB(object);
-  HashTable      *props = zend_std_get_properties(object TSRMLS_CC);
+  zval obj_zval;
+  ZVAL_OBJ(&obj_zval, object);
+  php_driver_blob *self = PHP_DRIVER_GET_BLOB(&obj_zval);
+  HashTable *props = zend_std_get_properties(object);
 
   type = php_driver_type_scalar(CASS_VALUE_TYPE_BLOB TSRMLS_CC);
   PHP5TO7_ZEND_HASH_UPDATE(props, "type", sizeof("type"), PHP5TO7_ZVAL_MAYBE_P(type), sizeof(zval));
@@ -142,6 +149,30 @@ php_driver_blob_properties(zval *object TSRMLS_DC)
 
   return props;
 }
+#else
+static HashTable *
+php_driver_blob_properties(zval *object TSRMLS_DC)
+{
+  char *hex;
+  int hex_len;
+  php5to7_zval type;
+  php5to7_zval bytes;
+
+  php_driver_blob *self = PHP_DRIVER_GET_BLOB(object);
+  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
+
+  type = php_driver_type_scalar(CASS_VALUE_TYPE_BLOB TSRMLS_CC);
+  PHP5TO7_ZEND_HASH_UPDATE(props, "type", sizeof("type"), PHP5TO7_ZVAL_MAYBE_P(type), sizeof(zval));
+
+  php_driver_bytes_to_hex((const char *) self->data, self->size, &hex, &hex_len);
+  PHP5TO7_ZVAL_MAYBE_MAKE(bytes);
+  PHP5TO7_ZVAL_STRINGL(PHP5TO7_ZVAL_MAYBE_P(bytes), hex, hex_len);
+  efree(hex);
+  PHP5TO7_ZEND_HASH_UPDATE(props, "bytes", sizeof("bytes"), PHP5TO7_ZVAL_MAYBE_P(bytes), sizeof(zval));
+
+  return props;
+}
+#endif
 
 static int
 php_driver_blob_compare(zval *obj1, zval *obj2 TSRMLS_DC)
@@ -180,7 +211,7 @@ php_driver_blob_free(php5to7_zend_object_free *object TSRMLS_DC)
     efree(self->data);
   }
 
-  zend_object_std_dtor(&self->zval TSRMLS_CC);
+  zend_object_std_dtor(object TSRMLS_CC);
   PHP5TO7_MAYBE_EFREE(self);
 }
 
@@ -190,7 +221,17 @@ php_driver_blob_new(zend_class_entry *ce TSRMLS_DC)
   php_driver_blob *self =
       PHP5TO7_ZEND_OBJECT_ECALLOC(blob, ce);
 
-  PHP5TO7_ZEND_OBJECT_INIT(blob, self, ce);
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_blob_handlers;
+  return &self->std;
+#else
+  zend_object_std_init(&self->zval, ce);
+  object_properties_init(&self->zval, ce);
+  self->zval.handlers = &php_driver_blob_handlers;
+  return &self->zval;
+#endif
 }
 
 void php_driver_define_Blob(TSRMLS_D)
@@ -205,7 +246,13 @@ void php_driver_define_Blob(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_blob_handlers.std.get_gc          = php_driver_blob_gc;
 #endif
+#if PHP_VERSION_ID < 80000
+  #if PHP_VERSION_ID < 80000
+
   php_driver_blob_handlers.std.compare_objects = php_driver_blob_compare;
+
+  #endif
+#endif
   php_driver_blob_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_blob_ce->create_object = php_driver_blob_new;
 
