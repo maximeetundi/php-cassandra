@@ -246,6 +246,115 @@ if (method_exists($session, 'close')) {
     $session->close();
 }
 ```
+# Installation de l’extension PHP Cassandra (build statique)
+
+Ce projet fournit un build **précompilé** de l’extension PHP Cassandra pour **PHP 8.3 (amd64, Linux/Ubuntu)**.  
+Vous n’avez donc **pas besoin de recompiler** le driver C/C++ DataStax ni l’extension.
+
+---
+
+## 📦 Prérequis
+
+Assurez-vous d’avoir installé les dépendances système suivantes :  
+
+```bash
+sudo apt-get update
+sudo apt-get install -y libuv1 libssl3 zlib1g libstdc++6 libgmp10
+```
+
+---
+
+## ⚡ Installation
+
+1. **Cloner le projet** :
+
+```bash
+git clone https://github.com/maximeetundi/php-cassandra.git
+cd php-cassandra/build-static/linux_amd64
+```
+
+2. **Trouver le dossier des extensions PHP** (il varie selon la version de PHP installée, par exemple `/usr/lib/php/20230831/`) :
+
+```bash
+php -i | grep ^extension_dir
+```
+
+Exemple de sortie :
+```
+extension_dir => /usr/lib/php/20230831 => /usr/lib/php/20230831
+```
+
+3. **Copier le module compilé (`cassandra.so`) dans ce dossier** :
+
+```bash
+EXT_DIR=$(php -i | grep ^extension_dir | awk '{print $3}')
+sudo cp cassandra.so $EXT_DIR/
+```
+
+4. **Créer le fichier de configuration de l’extension** :
+
+```bash
+echo "extension=cassandra.so" | sudo tee /etc/php/8.3/mods-available/cassandra.ini
+```
+
+5. **Activer l’extension** :
+
+```bash
+sudo phpenmod cassandra
+```
+
+6. **Redémarrer PHP (Apache ou PHP-FPM selon votre configuration)** :
+
+```bash
+# Si vous utilisez Apache :
+sudo systemctl restart apache2
+
+# Si vous utilisez PHP-FPM :
+sudo systemctl restart php8.3-fpm
+```
+
+---
+
+## ✅ Vérification
+
+Exécutez la commande suivante pour vérifier que l’extension est bien installée :
+
+```bash
+php -m | grep cassandra
+```
+
+Vous devriez voir :
+
+```
+cassandra
+```
+
+---
+
+## 🧪 Test rapide
+
+Créez un fichier `test.php` :
+
+```php
+<?php
+var_dump(extension_loaded("cassandra"));
+```
+
+Lancez-le :
+
+```bash
+php test.php
+```
+
+Résultat attendu :
+
+```
+bool(true)
+```
+
+---
+
+
 
 ## Dépannage
 
