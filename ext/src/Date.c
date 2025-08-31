@@ -230,6 +230,7 @@ php_driver_date_properties(zval *object TSRMLS_DC)
   return props;
 }
 
+#if PHP_VERSION_ID < 80000
 static int
 php_driver_date_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 {
@@ -243,6 +244,7 @@ php_driver_date_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 
   return PHP_DRIVER_COMPARE(date1->date, date2->date);
 }
+#endif
 
 static unsigned
 php_driver_date_hash_value(zval *obj TSRMLS_DC)
@@ -251,6 +253,7 @@ php_driver_date_hash_value(zval *obj TSRMLS_DC)
   return 31 * 17 + self->date;
 }
 
+#if PHP_VERSION_ID < 80000
 static void
 php_driver_date_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
@@ -259,6 +262,7 @@ php_driver_date_free(php5to7_zend_object_free *object TSRMLS_DC)
   zend_object_std_dtor(&self->zval TSRMLS_CC);
   PHP5TO7_MAYBE_EFREE(self);
 }
+#endif
 
 static php5to7_zend_object
 php_driver_date_new(zend_class_entry *ce TSRMLS_DC)
@@ -268,7 +272,17 @@ php_driver_date_new(zend_class_entry *ce TSRMLS_DC)
 
   self->date = 0;
 
-  PHP5TO7_ZEND_OBJECT_INIT(date, self, ce);
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_date_handlers.std;
+  return &self->std;
+#else
+  zend_object_std_init(&self->zval, ce);
+  object_properties_init(&self->zval, ce);
+  self->zval.handlers = &php_driver_date_handlers;
+  return &self->zval;
+#endif
 }
 
 void php_driver_define_Date(TSRMLS_D)
