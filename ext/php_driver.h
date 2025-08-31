@@ -177,10 +177,10 @@ php5to7_string_compare(php5to7_string s1, php5to7_string s2)
   PHP5TO7_ZEND_OBJECT_INIT_EX(type_name, type_name, self, ce)
 
 #define PHP5TO7_ZEND_OBJECT_INIT_EX(type_name, name, self, ce) do { \
-  zend_object_std_init(&self->zval, ce); \
-  object_properties_init(&self->zval, ce); \
-  self->zval.handlers = &php_driver_##name##_handlers; \
-  return &self->zval; \
+  zend_object_std_init(&self->std, ce); \
+  object_properties_init(&self->std, ce); \
+  self->std.handlers = &php_driver_##name##_handlers; \
+  return &self->std; \
 } while(0)
 
 #define PHP5TO7_MAYBE_EFREE(p) ((void)0)

@@ -225,7 +225,12 @@ static HashTable *
 php_driver_default_cluster_properties(zval *object TSRMLS_DC)
 #endif
 {
-  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+  HashTable *props =
+#if PHP_VERSION_ID >= 80000
+    zend_std_get_properties(object);
+#else
+    zend_std_get_properties(object TSRMLS_CC);
+#endif
 
   return props;
 }
@@ -239,6 +244,24 @@ php_driver_default_cluster_compare(zval *obj1, zval *obj2 TSRMLS_DC)
   return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj1);
 }
 
+#if PHP_VERSION_ID >= 80000
+static void php_driver_default_cluster_free_obj(zend_object *object)
+{
+  php_driver_cluster *self = php_driver_cluster_object_fetch(object);
+
+  if (self->persist) {
+    efree(self->hash_key);
+  } else {
+    if (self->cluster) {
+      cass_cluster_free(self->cluster);
+    }
+  }
+
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->default_timeout);
+
+  zend_object_std_dtor(object);
+}
+#else
 static void
 php_driver_default_cluster_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
@@ -257,6 +280,7 @@ php_driver_default_cluster_free(php5to7_zend_object_free *object TSRMLS_DC)
   zend_object_std_dtor(&self->zval TSRMLS_CC);
   PHP5TO7_MAYBE_EFREE(self);
 }
+#endif
 
 static php5to7_zend_object
 php_driver_default_cluster_new(zend_class_entry *ce TSRMLS_DC)
@@ -272,7 +296,14 @@ php_driver_default_cluster_new(zend_class_entry *ce TSRMLS_DC)
 
   PHP5TO7_ZVAL_UNDEF(self->default_timeout);
 
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_default_cluster_handlers;
+  return &self->std;
+#else
   PHP5TO7_ZEND_OBJECT_INIT_EX(cluster, default_cluster, self, ce);
+#endif
 }
 
 void php_driver_define_DefaultCluster(TSRMLS_D)
@@ -287,5 +318,10 @@ void php_driver_define_DefaultCluster(TSRMLS_D)
 
   memcpy(&php_driver_default_cluster_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
   php_driver_default_cluster_handlers.get_properties = php_driver_default_cluster_properties;
+#if PHP_VERSION_ID < 80000
   php_driver_default_cluster_handlers.compare_objects = php_driver_default_cluster_compare;
+#endif
+#if PHP_VERSION_ID >= 80000
+  php_driver_default_cluster_handlers.free_obj = php_driver_default_cluster_free_obj;
+#endif
 }
