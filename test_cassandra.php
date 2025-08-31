@@ -26,17 +26,18 @@ foreach ([$certPath, $keyPath] as $p) {
 
 try {
     // 4) Options SSL: cert client + clé privée
-    $sslBuilder = Cassandra\SSLOptions::builder()
-        ->withClientCert($certPath)
-        ->withPrivateKey($keyPath);
-        // Facultatif: si vous avez un certificat CA séparé, utilisez ->withTrustedCerts($caPath)
+    $sslBuilder = Cassandra\SSLOptions::builder();
+    $sslBuilder->withClientCert($certPath);
+    $sslBuilder->withPrivateKey($keyPath);
+    // Facultatif: si vous avez un certificat CA séparé, utilisez ->withTrustedCerts($caPath)
+    $ssl = $sslBuilder->build();
 
     // 5) Construction du cluster
-    $cluster = Cassandra\Cluster::builder()
-        ->withContactPoints($host)
-        ->withPort($port)
-        ->withSSL($sslBuilder->build())
-        ->build();
+    $clusterBuilder = Cassandra\Cluster::builder();
+    $clusterBuilder->withContactPoints($host);
+    $clusterBuilder->withPort($port);
+    $clusterBuilder->withSSL($ssl);
+    $cluster = $clusterBuilder->build();
 
     echo "Connexion au cluster...\n";
     
