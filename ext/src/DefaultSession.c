@@ -1069,8 +1069,13 @@ static zend_function_entry php_driver_default_session_methods[] = {
 
 static zend_object_handlers php_driver_default_session_handlers;
 
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_default_session_properties(zend_object *object)
+#else
 static HashTable *
 php_driver_default_session_properties(zval *object TSRMLS_DC)
+#endif
 {
   HashTable *props = zend_std_get_properties(object TSRMLS_CC);
 
@@ -1124,7 +1129,7 @@ void php_driver_define_DefaultSession(TSRMLS_D)
   php_driver_default_session_ce->create_object = php_driver_default_session_new;
 
   memcpy(&php_driver_default_session_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_default_session_handlers.get_properties  = php_driver_default_session_properties;
+  php_driver_default_session_handlers.get_properties = php_driver_default_session_properties;
   php_driver_default_session_handlers.compare_objects = php_driver_default_session_compare;
   php_driver_default_session_handlers.clone_obj = NULL;
 }

@@ -118,15 +118,24 @@ static zend_function_entry php_driver_uuid_methods[] = {
 static php_driver_value_handlers php_driver_uuid_handlers;
 
 static HashTable *
-php_driver_uuid_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
+php_driver_uuid_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
+  #if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
   return zend_std_get_properties(object TSRMLS_CC);
+#endif
 }
 
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_uuid_properties(zend_object *object)
+#else
 static HashTable *
 php_driver_uuid_properties(zval *object TSRMLS_DC)
+#endif
 {
   char string[CASS_UUID_STRING_LENGTH];
   php5to7_zval type;
@@ -212,11 +221,9 @@ php_driver_define_Uuid(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_uuid_handlers.std.get_gc          = php_driver_uuid_gc;
 #endif
-  #if PHP_VERSION_ID < 80000
-
+#if PHP_VERSION_ID < 80000
   php_driver_uuid_handlers.std.compare_objects = php_driver_uuid_compare;
-
-  #endif
+#endif
   php_driver_uuid_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_uuid_ce->create_object = php_driver_uuid_new;
 

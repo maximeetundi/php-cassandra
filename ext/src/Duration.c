@@ -225,8 +225,13 @@ static zend_function_entry php_driver_duration_methods[] = {
 
 static php_driver_value_handlers php_driver_duration_handlers;
 
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_duration_properties(zend_object *object)
+#else
 static HashTable *
 php_driver_duration_properties(zval *object TSRMLS_DC)
+#endif
 {
   HashTable *props = zend_std_get_properties(object TSRMLS_CC);
   php_driver_duration  *self = PHP_DRIVER_GET_DURATION(object);
@@ -322,11 +327,9 @@ void php_driver_define_Duration(TSRMLS_D)
 
   memcpy(&php_driver_duration_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
   php_driver_duration_handlers.std.get_properties  = php_driver_duration_properties;
-  #if PHP_VERSION_ID < 80000
-
+#if PHP_VERSION_ID < 80000
   php_driver_duration_handlers.std.compare_objects = php_driver_duration_compare;
-
-  #endif
+#endif
 
   php_driver_duration_handlers.hash_value = php_driver_duration_hash_value;
   php_driver_duration_handlers.std.clone_obj = NULL;

@@ -425,15 +425,24 @@ static zend_function_entry php_driver_tinyint_methods[] = {
 static php_driver_value_handlers php_driver_tinyint_handlers;
 
 static HashTable *
-php_driver_tinyint_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
+php_driver_tinyint_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
+  #if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
   return zend_std_get_properties(object TSRMLS_CC);
+#endif
 }
 
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_tinyint_properties(zend_object *object)
+#else
 static HashTable *
 php_driver_tinyint_properties(zval *object TSRMLS_DC)
+#endif
 {
   php5to7_zval type;
   php5to7_zval value;
@@ -532,11 +541,9 @@ void php_driver_define_Tinyint(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_tinyint_handlers.std.get_gc          = php_driver_tinyint_gc;
 #endif
-  #if PHP_VERSION_ID < 80000
-
+#if PHP_VERSION_ID < 80000
   php_driver_tinyint_handlers.std.compare_objects = php_driver_tinyint_compare;
-
-  #endif
+#endif
   php_driver_tinyint_handlers.std.cast_object     = php_driver_tinyint_cast;
 
   php_driver_tinyint_handlers.hash_value = php_driver_tinyint_hash_value;

@@ -214,15 +214,24 @@ static zend_function_entry php_driver_default_aggregate_methods[] = {
 static zend_object_handlers php_driver_default_aggregate_handlers;
 
 static HashTable *
-php_driver_type_default_aggregate_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
+php_driver_type_default_aggregate_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
+  #if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
   return zend_std_get_properties(object TSRMLS_CC);
+#endif
 }
 
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_default_aggregate_properties(zend_object *object)
+#else
 static HashTable *
 php_driver_default_aggregate_properties(zval *object TSRMLS_DC)
+#endif
 {
   HashTable *props = zend_std_get_properties(object TSRMLS_CC);
 
@@ -294,9 +303,9 @@ void php_driver_define_DefaultAggregate(TSRMLS_D)
   php_driver_default_aggregate_ce->create_object = php_driver_default_aggregate_new;
 
   memcpy(&php_driver_default_aggregate_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_default_aggregate_handlers.get_properties  = php_driver_default_aggregate_properties;
+  php_driver_default_aggregate_handlers.get_properties = php_driver_default_aggregate_properties;
 #if PHP_VERSION_ID >= 50400
-  php_driver_default_aggregate_handlers.get_gc          = php_driver_type_default_aggregate_gc;
+  php_driver_default_aggregate_handlers.get_gc = php_driver_type_default_aggregate_gc;
 #endif
   php_driver_default_aggregate_handlers.compare_objects = php_driver_default_aggregate_compare;
   php_driver_default_aggregate_handlers.clone_obj = NULL;

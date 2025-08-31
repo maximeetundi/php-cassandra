@@ -120,15 +120,24 @@ static zend_function_entry php_driver_type_set_methods[] = {
 static zend_object_handlers php_driver_type_set_handlers;
 
 static HashTable *
-php_driver_type_set_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
+php_driver_type_set_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
+  #if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
   return zend_std_get_properties(object TSRMLS_CC);
+#endif
 }
 
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_type_set_properties(zend_object *object)
+#else
 static HashTable *
 php_driver_type_set_properties(zval *object TSRMLS_DC)
+#endif
 {
   php_driver_type *self  = PHP_DRIVER_GET_TYPE(object);
   HashTable      *props = zend_std_get_properties(object TSRMLS_CC);
@@ -182,9 +191,9 @@ void php_driver_define_TypeSet(TSRMLS_D)
   INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\Type\\Set", php_driver_type_set_methods);
   php_driver_type_set_ce = php5to7_zend_register_internal_class_ex(&ce, php_driver_type_ce);
   memcpy(&php_driver_type_set_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_type_set_handlers.get_properties  = php_driver_type_set_properties;
+  php_driver_type_set_handlers.get_properties = php_driver_type_set_properties;
 #if PHP_VERSION_ID >= 50400
-  php_driver_type_set_handlers.get_gc          = php_driver_type_set_gc;
+  php_driver_type_set_handlers.get_gc = php_driver_type_set_gc;
 #endif
   php_driver_type_set_handlers.compare_objects = php_driver_type_set_compare;
   php_driver_type_set_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;

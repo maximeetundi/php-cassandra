@@ -1063,15 +1063,25 @@ static zend_function_entry php_driver_cluster_builder_methods[] = {
 static zend_object_handlers php_driver_cluster_builder_handlers;
 
 static HashTable*
-php_driver_cluster_builder_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
+php_driver_cluster_builder_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
-  return zend_std_get_properties(object TSRMLS_CC);
+#if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
+  php_driver_date *self = PHP_DRIVER_GET_DATE(object);
+  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+#endif
 }
 
+#if PHP_VERSION_ID >= 80000
+static HashTable*
+php_driver_cluster_builder_properties(zend_object *object)
+#else
 static HashTable*
 php_driver_cluster_builder_properties(zval *object TSRMLS_DC)
+#endif
 {
   php5to7_zval contactPoints;
   php5to7_zval loadBalancingPolicy;
@@ -1107,8 +1117,15 @@ php_driver_cluster_builder_properties(zval *object TSRMLS_DC)
   php5to7_zval randomizedContactPoints;
   php5to7_zval connectionHeartbeatInterval;
 
-  php_driver_cluster_builder *self = PHP_DRIVER_GET_CLUSTER_BUILDER(object);
+#if PHP_VERSION_ID >= 80000
+  zval obj_zval;
+  ZVAL_OBJ(&obj_zval, object);
+  php_driver_cluster_builder *self = PHP_DRIVER_GET_CLUSTER_BUILDER(&obj_zval);
+  HashTable *props = zend_std_get_properties(object);
+#else
+  php_driver_ *self = PHP_DRIVER_GET_(object);
   HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+#endif
 
   PHP5TO7_ZVAL_MAYBE_MAKE(contactPoints);
   PHP5TO7_ZVAL_STRING(PHP5TO7_ZVAL_MAYBE_P(contactPoints), self->contact_points);
@@ -1332,45 +1349,38 @@ php_driver_cluster_builder_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 static void
 php_driver_cluster_builder_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
-  php_driver_cluster_builder *self =
-      PHP5TO7_ZEND_OBJECT_GET(cluster_builder, object);
+  php_driver_cluster_builder *self = PHP5TO7_ZEND_OBJECT_GET(cluster_builder, object);
 
-  efree(self->contact_points);
-  self->contact_points = NULL;
+  if (self->contact_points) {
+    efree(self->contact_points);
+  }
 
   if (self->local_dc) {
     efree(self->local_dc);
-    self->local_dc = NULL;
   }
 
   if (self->username) {
     efree(self->username);
-    self->username = NULL;
   }
 
   if (self->password) {
     efree(self->password);
-    self->password = NULL;
-  }
-
-  if (self->whitelist_hosts) {
-    efree(self->whitelist_hosts);
-    self->whitelist_hosts = NULL;
   }
 
   if (self->blacklist_hosts) {
     efree(self->blacklist_hosts);
-    self->blacklist_hosts = NULL;
   }
 
-  if (self->whitelist_dcs) {
-    efree(self->whitelist_dcs);
-    self->whitelist_dcs = NULL;
+  if (self->whitelist_hosts) {
+    efree(self->whitelist_hosts);
   }
 
   if (self->blacklist_dcs) {
     efree(self->blacklist_dcs);
-    self->whitelist_dcs = NULL;
+  }
+
+  if (self->whitelist_dcs) {
+    efree(self->whitelist_dcs);
   }
 
   PHP5TO7_ZVAL_MAYBE_DESTROY(self->ssl_options);
@@ -1378,7 +1388,11 @@ php_driver_cluster_builder_free(php5to7_zend_object_free *object TSRMLS_DC)
   PHP5TO7_ZVAL_MAYBE_DESTROY(self->retry_policy);
   PHP5TO7_ZVAL_MAYBE_DESTROY(self->timestamp_gen);
 
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 
@@ -1425,7 +1439,14 @@ php_driver_cluster_builder_new(zend_class_entry *ce TSRMLS_DC)
   PHP5TO7_ZVAL_UNDEF(self->retry_policy);
   PHP5TO7_ZVAL_UNDEF(self->timestamp_gen);
 
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_cluster_builder_handlers;
+  return &self->std;
+#else
   PHP5TO7_ZEND_OBJECT_INIT(cluster_builder, self, ce);
+#endif
 }
 
 void php_driver_define_ClusterBuilder(TSRMLS_D)
@@ -1438,9 +1459,9 @@ void php_driver_define_ClusterBuilder(TSRMLS_D)
   php_driver_cluster_builder_ce->create_object = php_driver_cluster_builder_new;
 
   memcpy(&php_driver_cluster_builder_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_cluster_builder_handlers.get_properties  = php_driver_cluster_builder_properties;
+  php_driver_cluster_builder_handlers.get_properties = php_driver_cluster_builder_properties;
 #if PHP_VERSION_ID >= 50400
-  php_driver_cluster_builder_handlers.get_gc          = php_driver_cluster_builder_gc;
+  php_driver_cluster_builder_handlers.get_gc = php_driver_cluster_builder_gc;
 #endif
   php_driver_cluster_builder_handlers.compare_objects = php_driver_cluster_builder_compare;
 }

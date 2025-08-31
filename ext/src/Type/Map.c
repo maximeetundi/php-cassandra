@@ -145,15 +145,24 @@ static zend_function_entry php_driver_type_map_methods[] = {
 static zend_object_handlers php_driver_type_map_handlers;
 
 static HashTable *
-php_driver_type_map_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
+php_driver_type_map_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
+  #if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
   return zend_std_get_properties(object TSRMLS_CC);
+#endif
 }
 
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_type_map_properties(zend_object *object)
+#else
 static HashTable *
 php_driver_type_map_properties(zval *object TSRMLS_DC)
+#endif
 {
   php_driver_type *self  = PHP_DRIVER_GET_TYPE(object);
   HashTable      *props = zend_std_get_properties(object TSRMLS_CC);
@@ -214,9 +223,9 @@ void php_driver_define_TypeMap(TSRMLS_D)
   INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\Type\\Map", php_driver_type_map_methods);
   php_driver_type_map_ce = php5to7_zend_register_internal_class_ex(&ce, php_driver_type_ce);
   memcpy(&php_driver_type_map_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_type_map_handlers.get_properties  = php_driver_type_map_properties;
+  php_driver_type_map_handlers.get_properties = php_driver_type_map_properties;
 #if PHP_VERSION_ID >= 50400
-  php_driver_type_map_handlers.get_gc          = php_driver_type_map_gc;
+  php_driver_type_map_handlers.get_gc = php_driver_type_map_gc;
 #endif
   php_driver_type_map_handlers.compare_objects = php_driver_type_map_compare;
   php_driver_type_map_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;

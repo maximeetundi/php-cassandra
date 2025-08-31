@@ -25,8 +25,13 @@ static zend_function_entry php_driver_ssl_methods[] = {
 
 static zend_object_handlers php_driver_ssl_handlers;
 
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_ssl_properties(zend_object *object)
+#else
 static HashTable *
 php_driver_ssl_properties(zval *object TSRMLS_DC)
+#endif
 {
   HashTable *props = zend_std_get_properties(object TSRMLS_CC);
 
@@ -74,7 +79,7 @@ void php_driver_define_SSLOptions(TSRMLS_D)
   php_driver_ssl_ce->create_object = php_driver_ssl_new;
 
   memcpy(&php_driver_ssl_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_ssl_handlers.get_properties  = php_driver_ssl_properties;
+  php_driver_ssl_handlers.get_properties = php_driver_ssl_properties;
   php_driver_ssl_handlers.compare_objects = php_driver_ssl_compare;
   php_driver_ssl_handlers.clone_obj = NULL;
 }

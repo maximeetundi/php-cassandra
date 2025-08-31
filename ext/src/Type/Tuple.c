@@ -156,15 +156,24 @@ static zend_function_entry php_driver_type_tuple_methods[] = {
 static zend_object_handlers php_driver_type_tuple_handlers;
 
 static HashTable *
-php_driver_type_tuple_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
+php_driver_type_tuple_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
+  #if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
   return zend_std_get_properties(object TSRMLS_CC);
+#endif
 }
 
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_type_tuple_properties(zend_object *object)
+#else
 static HashTable *
 php_driver_type_tuple_properties(zval *object TSRMLS_DC)
+#endif
 {
   php5to7_zval types;
 
@@ -221,9 +230,9 @@ void php_driver_define_TypeTuple(TSRMLS_D)
   INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\Type\\Tuple", php_driver_type_tuple_methods);
   php_driver_type_tuple_ce = php5to7_zend_register_internal_class_ex(&ce, php_driver_type_ce);
   memcpy(&php_driver_type_tuple_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_type_tuple_handlers.get_properties  = php_driver_type_tuple_properties;
+  php_driver_type_tuple_handlers.get_properties = php_driver_type_tuple_properties;
 #if PHP_VERSION_ID >= 50400
-  php_driver_type_tuple_handlers.get_gc          = php_driver_type_tuple_gc;
+  php_driver_type_tuple_handlers.get_gc = php_driver_type_tuple_gc;
 #endif
   php_driver_type_tuple_handlers.compare_objects = php_driver_type_tuple_compare;
   php_driver_type_tuple_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;

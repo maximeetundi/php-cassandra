@@ -235,15 +235,24 @@ static zend_function_entry php_driver_default_index_methods[] = {
 static zend_object_handlers php_driver_default_index_handlers;
 
 static HashTable *
-php_driver_type_default_index_gc(zval *object, php5to7_zval_gc table, int *n TSRMLS_DC)
+php_driver_type_default_index_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
+  #if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
   return zend_std_get_properties(object TSRMLS_CC);
+#endif
 }
 
+#if PHP_VERSION_ID >= 80000
+static HashTable *
+php_driver_default_index_properties(zend_object *object)
+#else
 static HashTable *
 php_driver_default_index_properties(zval *object TSRMLS_DC)
+#endif
 {
   HashTable *props = zend_std_get_properties(object TSRMLS_CC);
 
@@ -307,9 +316,9 @@ void php_driver_define_DefaultIndex(TSRMLS_D)
   php_driver_default_index_ce->create_object = php_driver_default_index_new;
 
   memcpy(&php_driver_default_index_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_default_index_handlers.get_properties  = php_driver_default_index_properties;
+  php_driver_default_index_handlers.get_properties = php_driver_default_index_properties;
 #if PHP_VERSION_ID >= 50400
-  php_driver_default_index_handlers.get_gc          = php_driver_type_default_index_gc;
+  php_driver_default_index_handlers.get_gc = php_driver_type_default_index_gc;
 #endif
   php_driver_default_index_handlers.compare_objects = php_driver_default_index_compare;
   php_driver_default_index_handlers.clone_obj = NULL;
