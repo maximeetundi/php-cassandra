@@ -599,12 +599,12 @@ php_driver_map_properties(zend_object *object)
 
   array_init(&keys);
   php_driver_map_populate_keys(self, &keys);
-  zend_hash_sort(Z_ARRVAL(keys), (compare_func_t)php_driver_bucket_data_compare, 1);
+  zend_hash_sort(Z_ARRVAL(keys), php_driver_bucket_data_compare, 1);
   zend_hash_str_update(props, "keys", sizeof("keys") - 1, &keys);
 
   array_init(&values);
   php_driver_map_populate_values(self, &values);
-  zend_hash_sort(Z_ARRVAL(values), (compare_func_t)php_driver_bucket_data_compare, 1);
+  zend_hash_sort(Z_ARRVAL(values), php_driver_bucket_data_compare, 1);
   zend_hash_str_update(props, "values", sizeof("values") - 1, &values);
 
   return props;
@@ -756,7 +756,7 @@ void php_driver_define_Map(TSRMLS_D)
 {
   zend_class_entry ce;
 
-  INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\Map", php_driver_map_methods);
+  INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\Map", php_driver_map_methods);
   php_driver_map_ce = zend_register_internal_class(&ce TSRMLS_CC);
   zend_class_implements(php_driver_map_ce TSRMLS_CC, 1, php_driver_value_ce);
   memcpy(&php_driver_map_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
@@ -769,14 +769,10 @@ void php_driver_define_Map(TSRMLS_D)
 #endif
   php_driver_map_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_map_ce->create_object = php_driver_map_new;
-  #if PHP_VERSION_ID >= 80000
+#if PHP_VERSION_ID >= 80000
   zend_class_implements(php_driver_map_ce, 3, zend_ce_countable, zend_ce_iterator, zend_ce_arrayaccess);
 #else
   zend_class_implements(php_driver_map_ce TSRMLS_CC, 3, spl_ce_Countable, zend_ce_iterator, zend_ce_arrayaccess);
-#endif
-
-#if PHP_VERSION_ID >= 80000
-  php_driver_map_handlers.hash_value = php_driver_map_hash_value;
 #endif
   php_driver_map_handlers.clone_obj = NULL;
 }

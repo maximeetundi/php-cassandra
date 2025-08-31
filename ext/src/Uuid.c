@@ -277,7 +277,8 @@ php_driver_define_Uuid(TSRMLS_D)
 #endif
   php_driver_uuid_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_uuid_ce->create_object = php_driver_uuid_new;
-
+#if PHP_VERSION_ID < 80000
   php_driver_uuid_handlers.hash_value = php_driver_uuid_hash_value;
+#endif
   php_driver_uuid_handlers.std.clone_obj = NULL;
 }

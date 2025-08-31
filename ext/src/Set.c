@@ -347,6 +347,12 @@ static zend_function_entry php_driver_set_methods[] = {
 static zend_object_handlers php_driver_set_handlers;
 
 #if PHP_VERSION_ID >= 80000
+static int
+php_driver_bucket_data_compare(Bucket *a, Bucket *b)
+{
+  return php_driver_data_compare(&a->val, &b->val);
+}
+
 static HashTable *
 php_driver_set_gc(zend_object *object, zval **table, int *n)
 {
@@ -379,7 +385,7 @@ php_driver_set_properties(zend_object* object)
 
     array_init(&values);
     php_driver_set_populate(self, &values);
-    zend_hash_sort(Z_ARRVAL(values), (compare_func_t)php_driver_data_compare, 1);
+    zend_hash_sort(Z_ARRVAL(values), php_driver_bucket_data_compare, 1);
     zend_hash_update(props, zend_string_init("values", 6, 0), &values);
 
     return props;

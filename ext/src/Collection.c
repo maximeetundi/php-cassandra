@@ -255,6 +255,26 @@ PHP_METHOD(Collection, rewind)
 }
 /* }}} */
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_count, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_current, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_key, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_next, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_valid, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_rewind, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+#endif
+
 /* {{{ Collection::remove(key) */
 PHP_METHOD(Collection, remove)
 {
@@ -298,13 +318,37 @@ static zend_function_entry php_driver_collection_methods[] = {
   PHP_ME(Collection, get, arginfo_index, ZEND_ACC_PUBLIC)
   PHP_ME(Collection, find, arginfo_value, ZEND_ACC_PUBLIC)
   /* Countable */
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Collection, count, arginfo_count, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Collection, count, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
   /* Iterator */
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Collection, current, arginfo_current, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Collection, current, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Collection, key, arginfo_key, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Collection, key, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Collection, next, arginfo_next, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Collection, next, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Collection, valid, arginfo_valid, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Collection, valid, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Collection, rewind, arginfo_rewind, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Collection, rewind, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
   PHP_ME(Collection, remove, arginfo_index, ZEND_ACC_PUBLIC)
   PHP_FE_END
 };
@@ -478,7 +522,9 @@ void php_driver_define_Collection(TSRMLS_D)
   php_driver_collection_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_collection_ce->create_object = php_driver_collection_new;
   zend_class_implements(php_driver_collection_ce TSRMLS_CC, 2, zend_ce_countable, zend_ce_iterator);
-
+  
+#if PHP_VERSION_ID < 80000
   php_driver_collection_handlers.hash_value = php_driver_collection_hash_value;
+#endif
   php_driver_collection_handlers.std.clone_obj = NULL;
 }

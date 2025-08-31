@@ -497,7 +497,7 @@ void php_driver_define_Bigint(void)
 {
   zend_class_entry ce;
 
-  INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\Bigint", php_driver_bigint_methods);
+  INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\Bigint", php_driver_bigint_methods);
   php_driver_bigint_ce = zend_register_internal_class(&ce);
   zend_class_implements(php_driver_bigint_ce, 2, php_driver_value_ce, php_driver_numeric_ce);
   php_driver_bigint_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;
@@ -512,6 +512,8 @@ void php_driver_define_Bigint(void)
   php_driver_bigint_handlers.std.cast_object     = (zend_object_cast_t)php_driver_bigint_cast;
   php_driver_bigint_handlers.std.free_obj        = php_driver_bigint_free;
 
+#if PHP_VERSION_ID < 80000
   php_driver_bigint_handlers.hash_value = php_driver_bigint_hash_value;
+#endif
   php_driver_bigint_handlers.std.clone_obj = NULL;
 }
