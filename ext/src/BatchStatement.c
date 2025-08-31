@@ -130,6 +130,7 @@ php_driver_batch_statement_properties(zend_object *object)
   return props;
 }
 
+#if PHP_VERSION_ID < 80000
 static int
 php_driver_batch_statement_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 {
@@ -138,6 +139,7 @@ php_driver_batch_statement_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 
   return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj1);
 }
+#endif
 
 static void
 php_driver_batch_statement_free(zend_object *object)
@@ -179,6 +181,8 @@ void php_driver_define_BatchStatement(TSRMLS_D)
 
   memcpy(&php_driver_batch_statement_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
   php_driver_batch_statement_handlers.get_properties = php_driver_batch_statement_properties;
-  /* php_driver_batch_statement_handlers.compare_objects = php_driver_batch_statement_compare; */
+#if PHP_VERSION_ID < 80000
+  php_driver_batch_statement_handlers.compare_objects = php_driver_batch_statement_compare;
+#endif
   php_driver_batch_statement_handlers.clone_obj = NULL;
 }
