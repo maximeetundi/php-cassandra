@@ -252,6 +252,29 @@ php_driver_default_aggregate_compare(zval *obj1, zval *obj2 TSRMLS_DC)
   return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj1);
 }
 
+#if PHP_VERSION_ID >= 80000
+static void php_driver_default_aggregate_free_obj(zend_object *object)
+{
+  php_driver_aggregate *self = php_driver_aggregate_object_fetch(object);
+
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->simple_name);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->argument_types);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->state_function);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->final_function);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->initial_condition);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->state_type);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->return_type);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->signature);
+
+  if (self->schema) {
+    php_driver_del_ref(&self->schema);
+    self->schema = NULL;
+  }
+  self->meta = NULL;
+
+  zend_object_std_dtor(object);
+}
+#else
 static void
 php_driver_default_aggregate_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
@@ -272,13 +295,10 @@ php_driver_default_aggregate_free(php5to7_zend_object_free *object TSRMLS_DC)
   }
   self->meta = NULL;
 
-#if PHP_VERSION_ID >= 80000
-  zend_object_std_dtor(&self->std);
-#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
-#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
+#endif
 
 static php5to7_zend_object
 php_driver_default_aggregate_new(zend_class_entry *ce TSRMLS_DC)
@@ -297,8 +317,14 @@ php_driver_default_aggregate_new(zend_class_entry *ce TSRMLS_DC)
 
   self->schema = NULL;
   self->meta = NULL;
-
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_default_aggregate_handlers;
+  return &self->std;
+#else
   PHP5TO7_ZEND_OBJECT_INIT_EX(aggregate, default_aggregate, self, ce);
+#endif
 }
 
 void php_driver_define_DefaultAggregate(TSRMLS_D)
@@ -318,6 +344,10 @@ void php_driver_define_DefaultAggregate(TSRMLS_D)
 #endif
 #if PHP_VERSION_ID < 80000
   php_driver_default_aggregate_handlers.compare_objects = php_driver_default_aggregate_compare;
+#endif
+  /* Set free_obj for PHP 8+ */
+#if PHP_VERSION_ID >= 80000
+  php_driver_default_aggregate_handlers.free_obj = php_driver_default_aggregate_free_obj;
 #endif
   php_driver_default_aggregate_handlers.clone_obj = NULL;
 }
