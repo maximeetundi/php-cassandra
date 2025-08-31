@@ -1069,6 +1069,20 @@ static zend_function_entry php_driver_default_session_methods[] = {
 
 static zend_object_handlers php_driver_default_session_handlers;
 
+#if PHP_VERSION_ID >= 50400
+static HashTable *
+php_driver_type_default_session_gc(zend_object *object, zval **table, int *n)
+{
+  *table = NULL;
+  *n = 0;
+#if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
+  return zend_std_get_properties(object TSRMLS_CC);
+#endif
+}
+#endif
+
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_default_session_properties(zend_object *object)
@@ -1077,7 +1091,12 @@ static HashTable *
 php_driver_default_session_properties(zval *object TSRMLS_DC)
 #endif
 {
-  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+  HashTable *props;
+#if PHP_VERSION_ID >= 80000
+  props = zend_std_get_properties(object);
+#else
+  props = zend_std_get_properties(object TSRMLS_CC);
+#endif
 
   return props;
 }
@@ -1088,7 +1107,7 @@ php_driver_default_session_compare(zval *obj1, zval *obj2 TSRMLS_DC)
   if (Z_OBJCE_P(obj1) != Z_OBJCE_P(obj2))
     return 1; /* different classes */
 
-  return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj1);
+  return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj2);
 }
 
 static void
@@ -1130,6 +1149,11 @@ void php_driver_define_DefaultSession(TSRMLS_D)
 
   memcpy(&php_driver_default_session_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
   php_driver_default_session_handlers.get_properties = php_driver_default_session_properties;
+#if PHP_VERSION_ID >= 50400
+  php_driver_default_session_handlers.get_gc = php_driver_type_default_session_gc;
+#endif
+#if PHP_VERSION_ID < 80000
   php_driver_default_session_handlers.compare_objects = php_driver_default_session_compare;
+#endif
   php_driver_default_session_handlers.clone_obj = NULL;
 }

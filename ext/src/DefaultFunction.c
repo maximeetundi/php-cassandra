@@ -226,7 +226,11 @@ static HashTable *
 php_driver_default_function_properties(zval *object TSRMLS_DC)
 #endif
 {
+#if PHP_VERSION_ID >= 80000
+  HashTable *props = zend_std_get_properties(object);
+#else
   HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+#endif
 
   return props;
 }
@@ -237,9 +241,31 @@ php_driver_default_function_compare(zval *obj1, zval *obj2 TSRMLS_DC)
   if (Z_OBJCE_P(obj1) != Z_OBJCE_P(obj2))
     return 1; /* different classes */
 
-  return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj1);
+  return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj2);
 }
 
+#if PHP_VERSION_ID >= 80000
+static void
+php_driver_default_function_free(zend_object *object)
+{
+  php_driver_function *self = php_driver_function_object_fetch(object);
+
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->simple_name);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->arguments);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->return_type);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->signature);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->language);
+  PHP5TO7_ZVAL_MAYBE_DESTROY(self->body);
+
+  if (self->schema) {
+    php_driver_del_ref(&self->schema);
+    self->schema = NULL;
+  }
+  self->meta = NULL;
+
+  zend_object_std_dtor(&self->std);
+}
+#else
 static void
 php_driver_default_function_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
@@ -261,7 +287,33 @@ php_driver_default_function_free(php5to7_zend_object_free *object TSRMLS_DC)
   zend_object_std_dtor(&self->zval TSRMLS_CC);
   PHP5TO7_MAYBE_EFREE(self);
 }
+#endif
 
+#if PHP_VERSION_ID >= 80000
+static zend_object*
+php_driver_default_function_new(zend_class_entry *ce)
+{
+  php_driver_function *self =
+      (php_driver_function *) zend_object_alloc(sizeof(php_driver_function), ce);
+
+  PHP5TO7_ZVAL_UNDEF(self->simple_name);
+  PHP5TO7_ZVAL_UNDEF(self->arguments);
+  PHP5TO7_ZVAL_UNDEF(self->return_type);
+  PHP5TO7_ZVAL_UNDEF(self->signature);
+  PHP5TO7_ZVAL_UNDEF(self->language);
+  PHP5TO7_ZVAL_UNDEF(self->body);
+
+  self->schema = NULL;
+  self->meta = NULL;
+
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+
+  self->std.handlers = &php_driver_default_function_handlers;
+
+  return &self->std;
+}
+#else
 static php5to7_zend_object
 php_driver_default_function_new(zend_class_entry *ce TSRMLS_DC)
 {
@@ -280,6 +332,7 @@ php_driver_default_function_new(zend_class_entry *ce TSRMLS_DC)
 
   PHP5TO7_ZEND_OBJECT_INIT_EX(function, default_function, self, ce);
 }
+#endif
 
 void php_driver_define_DefaultFunction(TSRMLS_D)
 {
@@ -296,6 +349,13 @@ void php_driver_define_DefaultFunction(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_default_function_handlers.get_gc = php_driver_type_default_function_gc;
 #endif
+#if PHP_VERSION_ID < 80000
   php_driver_default_function_handlers.compare_objects = php_driver_default_function_compare;
+#else
+  /* PHP 8+: do not set compare_objects; use default */
+#endif
   php_driver_default_function_handlers.clone_obj = NULL;
+#if PHP_VERSION_ID >= 80000
+  php_driver_default_function_handlers.free_obj = php_driver_default_function_free;
+#endif
 }

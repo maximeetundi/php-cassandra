@@ -716,7 +716,7 @@ php_driver_default_table_compare(zval *obj1, zval *obj2 TSRMLS_DC)
   if (Z_OBJCE_P(obj1) != Z_OBJCE_P(obj2))
     return 1; /* different classes */
 
-  return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj1);
+  return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj2);
 }
 
 static void
@@ -775,6 +775,10 @@ void php_driver_define_DefaultTable(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_default_table_handlers.get_gc = php_driver_type_default_table_gc;
 #endif
+  #if PHP_VERSION_ID < 80000
   php_driver_default_table_handlers.compare_objects = php_driver_default_table_compare;
+  #else
+  /* PHP 8+: do not set compare_objects; use default */
+  #endif
   php_driver_default_table_handlers.clone_obj = NULL;
 }

@@ -608,7 +608,7 @@ php_driver_default_materialized_view_compare(zval *obj1, zval *obj2 TSRMLS_DC)
   if (Z_OBJCE_P(obj1) != Z_OBJCE_P(obj2))
     return 1; /* different classes */
 
-  return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj1);
+  return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj2);
 }
 
 static void
@@ -668,6 +668,9 @@ void php_driver_define_DefaultMaterializedView(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_default_materialized_view_handlers.get_gc = php_driver_type_default_materialized_view_gc;
 #endif
+  /* compare_objects was removed in PHP 8 */
+#if PHP_VERSION_ID < 80000
   php_driver_default_materialized_view_handlers.compare_objects = php_driver_default_materialized_view_compare;
+#endif
   php_driver_default_materialized_view_handlers.clone_obj = NULL;
 }
