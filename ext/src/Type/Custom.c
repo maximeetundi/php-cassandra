@@ -94,10 +94,24 @@ php_driver_type_custom_gc(zend_object *object, zval **table, int *n)
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_type_custom_properties(zend_object *object)
+{
+  zval name;
+  zval obj_zval;
+  ZVAL_OBJ(&obj_zval, object);
+
+  php_driver_type *self  = PHP_DRIVER_GET_TYPE(&obj_zval);
+  HashTable      *props = zend_std_get_properties(object);
+
+  ZVAL_STRING(&name, self->data.custom.class_name);
+
+  zend_hash_str_update(props,
+                       "name", sizeof("name") - 1,
+                       &name);
+  return props;
+}
 #else
 static HashTable *
 php_driver_type_custom_properties(zval *object TSRMLS_DC)
-#endif
 {
   php5to7_zval name;
 
@@ -112,6 +126,7 @@ php_driver_type_custom_properties(zval *object TSRMLS_DC)
                            PHP5TO7_ZVAL_MAYBE_P(name), sizeof(zval));
   return props;
 }
+#endif
 
 static int
 php_driver_type_custom_compare(zval *obj1, zval *obj2 TSRMLS_DC)
@@ -133,7 +148,11 @@ php_driver_type_custom_free(php5to7_zend_object_free *object TSRMLS_DC)
     self->data.custom.class_name = NULL;
   }
 
+  #if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 
@@ -160,7 +179,11 @@ void php_driver_define_TypeCustom(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_type_custom_handlers.get_gc = php_driver_type_custom_gc;
 #endif
+  #if PHP_VERSION_ID >= 80000
+  php_driver_type_custom_handlers.compare = php_driver_type_custom_compare;
+#else
   php_driver_type_custom_handlers.compare_objects = php_driver_type_custom_compare;
+#endif
   php_driver_type_custom_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_type_custom_ce->create_object = php_driver_type_custom_new;
 }

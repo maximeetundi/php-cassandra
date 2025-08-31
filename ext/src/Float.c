@@ -22,6 +22,17 @@
 
 zend_class_entry *php_driver_float_ce = NULL;
 
+#if PHP_VERSION_ID >= 80000
+static int
+to_string(zval *result, php_driver_numeric *flt)
+{
+  char *string;
+  spprintf(&string, 0, "%.*F", (int) EG(precision), flt->data.floating.value);
+  PHP5TO7_ZVAL_STRING(result, string);
+  efree(string);
+  return SUCCESS;
+}
+#else
 static int
 to_string(zval *result, php_driver_numeric *flt TSRMLS_DC)
 {
@@ -31,6 +42,7 @@ to_string(zval *result, php_driver_numeric *flt TSRMLS_DC)
   efree(string);
   return SUCCESS;
 }
+#endif
 
 void
 php_driver_float_init(INTERNAL_FUNCTION_PARAMETERS)
@@ -74,6 +86,9 @@ PHP_METHOD(Float, __construct)
   php_driver_float_init(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 
 /* {{{ Float::__toString() */
 PHP_METHOD(Float, __toString)
@@ -348,7 +363,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry php_driver_float_methods[] = {
   PHP_ME(Float, __construct, arginfo__construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-  PHP_ME(Float, __toString, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Float, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_ME(Float, type, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Float, value, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Float, isInfinite, arginfo_none, ZEND_ACC_PUBLIC)
@@ -390,30 +405,30 @@ php_driver_float_gc(zend_object *object, zval **table, int *n)
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_float_properties(zend_object *object)
-#else
-#if PHP_VERSION_ID >= 80000
-static HashTable *
-php_driver_float_properties(zend_object *object)
 {
-  zval obj_zval;
-  ZVAL_OBJ(&obj_zval, object);
-  // Function body will be updated below
+  php_driver_numeric *self = php_driver_numeric_object_fetch(object);
+  HashTable *props = zend_std_get_properties(object);
+
+  zval type;
+  zval value;
+
+  type = php_driver_type_scalar(CASS_VALUE_TYPE_FLOAT);
+  zend_hash_str_update(props, "type", sizeof("type") - 1, &type);
+
+  to_string(&value, self);
+  zend_hash_str_update(props, "value", sizeof("value") - 1, &value);
+
+  return props;
+}
 #else
 static HashTable *
 php_driver_float_properties(zval *object TSRMLS_DC)
-{
-#endif
-#endif
 {
   php5to7_zval type;
   php5to7_zval value;
 
   php_driver_numeric *self = PHP_DRIVER_GET_NUMERIC(object);
-  #if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
-  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
+  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
 
   type = php_driver_type_scalar(CASS_VALUE_TYPE_FLOAT TSRMLS_CC);
   PHP5TO7_ZEND_HASH_UPDATE(props, "type", sizeof("type"), PHP5TO7_ZVAL_MAYBE_P(type), sizeof(zval));
@@ -424,6 +439,7 @@ php_driver_float_properties(zval *object TSRMLS_DC)
 
   return props;
 }
+#endif
 
 static inline cass_int32_t
 float_to_bits(cass_float_t value) {

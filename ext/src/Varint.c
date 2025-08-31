@@ -110,6 +110,9 @@ PHP_METHOD(Varint, __construct)
 }
 /* }}} */
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 /* {{{ Varint::__toString() */
 PHP_METHOD(Varint, __toString)
 {
@@ -352,7 +355,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry php_driver_varint_methods[] = {
   PHP_ME(Varint, __construct, arginfo__construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-  PHP_ME(Varint, __toString, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Varint, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_ME(Varint, type, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Varint, value, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Varint, add, arginfo_num, ZEND_ACC_PUBLIC)
@@ -370,39 +373,52 @@ static zend_function_entry php_driver_varint_methods[] = {
 
 static php_driver_value_handlers php_driver_varint_handlers;
 
+#if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_varint_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
-  #if PHP_VERSION_ID >= 80000
-  #if PHP_VERSION_ID >= 80000
   return zend_std_get_properties(object);
-#else
-  return zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
-#else
-  return zend_std_get_properties(object TSRMLS_CC);
-#endif
 }
+#else
+static HashTable *
+php_driver_varint_gc(zval *object, zval **table, int *n)
+{
+  *table = NULL;
+  *n = 0;
+  return zend_std_get_properties(object TSRMLS_CC);
+}
+#endif
 
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_varint_properties(zend_object *object)
-#else
-#if PHP_VERSION_ID >= 80000
-static HashTable *
-php_driver_varint_properties(zend_object *object)
 {
+  char *string;
+  int string_len;
+  zval type;
+  zval value;
   zval obj_zval;
   ZVAL_OBJ(&obj_zval, object);
-  // Function body will be updated below
+
+  php_driver_numeric *self = PHP_DRIVER_GET_NUMERIC(&obj_zval);
+  HashTable *props = zend_std_get_properties(object);
+
+  php_driver_format_integer(self->data.varint.value, &string, &string_len);
+
+  type = php_driver_type_scalar(CASS_VALUE_TYPE_VARINT);
+  zend_hash_str_update(props, "type", sizeof("type") - 1, &type);
+
+  ZVAL_STRINGL(&value, string, string_len);
+  efree(string);
+  zend_hash_str_update(props, "value", sizeof("value") - 1, &value);
+
+  return props;
+}
 #else
 static HashTable *
 php_driver_varint_properties(zval *object TSRMLS_DC)
-{
-#endif
-#endif
 {
   char *string;
   int string_len;
@@ -410,11 +426,7 @@ php_driver_varint_properties(zval *object TSRMLS_DC)
   php5to7_zval value;
 
   php_driver_numeric *self = PHP_DRIVER_GET_NUMERIC(object);
-  #if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
-  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
+  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
 
   php_driver_format_integer(self->data.varint.value, &string, &string_len);
 
@@ -428,6 +440,7 @@ php_driver_varint_properties(zval *object TSRMLS_DC)
 
   return props;
 }
+#endif
 
 #if PHP_VERSION_ID < 80000
 static int

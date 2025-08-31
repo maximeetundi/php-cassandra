@@ -51,6 +51,9 @@ PHP_METHOD(Blob, __construct)
 }
 /* }}} */
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 /* {{{ Blob::__toString() */
 PHP_METHOD(Blob, __toString)
 {
@@ -103,7 +106,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry php_driver_blob_methods[] = {
   PHP_ME(Blob, __construct, arginfo__construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-  PHP_ME(Blob, __toString, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Blob, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_ME(Blob, type, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Blob, bytes, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Blob, toBinaryString, arginfo_none, ZEND_ACC_PUBLIC)

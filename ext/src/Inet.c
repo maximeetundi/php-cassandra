@@ -51,6 +51,9 @@ PHP_METHOD(Inet, __construct)
 }
 /* }}} */
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 /* {{{ Inet::__toString() */
 PHP_METHOD(Inet, __toString)
 {
@@ -92,7 +95,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry php_driver_inet_methods[] = {
   PHP_ME(Inet, __construct, arginfo__construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-  PHP_ME(Inet, __toString, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Inet, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_ME(Inet, type, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Inet, address, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_FE_END
@@ -119,31 +122,34 @@ php_driver_inet_gc(zend_object *object, zval **table, int *n)
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_inet_properties(zend_object *object)
-#else
-#if PHP_VERSION_ID >= 80000
-static HashTable *
-php_driver_inet_properties(zend_object *object)
 {
-  zval obj_zval;
-  ZVAL_OBJ(&obj_zval, object);
-  // Function body will be updated below
+  char *string;
+  zval type;
+  zval address;
+
+  php_driver_inet *self = php_driver_inet_object_fetch(object);
+  HashTable *props = zend_std_get_properties(object);
+
+  type = php_driver_type_scalar(CASS_VALUE_TYPE_INET);
+  zend_hash_str_update(props, "type", sizeof("type") - 1, &type);
+
+  php_driver_format_address(self->inet, &string);
+  ZVAL_STRING(&address, string);
+  efree(string);
+  zend_hash_str_update(props, "address", sizeof("address") - 1, &address);
+
+  return props;
+}
 #else
 static HashTable *
 php_driver_inet_properties(zval *object TSRMLS_DC)
-{
-#endif
-#endif
 {
   char *string;
   php5to7_zval type;
   php5to7_zval address;
 
   php_driver_inet *self = PHP_DRIVER_GET_INET(object);
-  #if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
-  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
+  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
 
   type = php_driver_type_scalar(CASS_VALUE_TYPE_INET TSRMLS_CC);
   PHP5TO7_ZEND_HASH_UPDATE(props, "type", sizeof("type"), PHP5TO7_ZVAL_MAYBE_P(type), sizeof(zval));
@@ -156,6 +162,7 @@ php_driver_inet_properties(zval *object TSRMLS_DC)
 
   return props;
 }
+#endif
 
 #if PHP_VERSION_ID < 80000
 static int
@@ -184,17 +191,12 @@ php_driver_inet_hash_value(zval *obj TSRMLS_DC)
                                self->inet.address_length);
 }
 
-#if PHP_VERSION_ID < 80000
 static void
 php_driver_inet_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
   php_driver_inet *self = PHP5TO7_ZEND_OBJECT_GET(inet, object);
 
-  #if PHP_VERSION_ID >= 80000
-  zend_object_std_dtor(&self->std);
-#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
-#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 #endif
@@ -236,6 +238,8 @@ void php_driver_define_Inet(TSRMLS_D)
   php_driver_inet_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_inet_ce->create_object = php_driver_inet_new;
 
+  #if PHP_VERSION_ID < 80000
   php_driver_inet_handlers.hash_value = php_driver_inet_hash_value;
+#endif
   php_driver_inet_handlers.std.clone_obj = NULL;
 }

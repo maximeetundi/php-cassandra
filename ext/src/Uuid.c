@@ -45,7 +45,7 @@ php_driver_uuid_init(INTERNAL_FUNCTION_PARAMETERS)
   } else {
     if (cass_uuid_from_string(value, &self->uuid) != CASS_OK) {
       zend_throw_exception_ex(php_driver_invalid_argument_exception_ce, 0 TSRMLS_CC,
-                              "Invalid UUID: '%.*s'", value_len, value);
+                              "Invalid UUID: '%.*s'", (int)value_len, value);
       return;
     }
   }
@@ -57,6 +57,9 @@ PHP_METHOD(Uuid, __construct)
   php_driver_uuid_init(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 
 /* {{{ Uuid::__toString() */
 PHP_METHOD(Uuid, __toString)
@@ -108,7 +111,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry php_driver_uuid_methods[] = {
   PHP_ME(Uuid, __construct, arginfo__construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-  PHP_ME(Uuid, __toString, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Uuid, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_ME(Uuid, type, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Uuid, uuid, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Uuid, version, arginfo_none, ZEND_ACC_PUBLIC)
@@ -117,39 +120,54 @@ static zend_function_entry php_driver_uuid_methods[] = {
 
 static php_driver_value_handlers php_driver_uuid_handlers;
 
+#if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_uuid_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
-  #if PHP_VERSION_ID >= 80000
-  #if PHP_VERSION_ID >= 80000
   return zend_std_get_properties(object);
-#else
-  return zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
-#else
-  return zend_std_get_properties(object TSRMLS_CC);
-#endif
 }
+#else
+static HashTable *
+php_driver_uuid_gc(zval *object, zval **table, int *n)
+{
+  *table = NULL;
+  *n = 0;
+  return zend_std_get_properties(object TSRMLS_CC);
+}
+#endif
 
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_uuid_properties(zend_object *object)
-#else
-#if PHP_VERSION_ID >= 80000
-static HashTable *
-php_driver_uuid_properties(zend_object *object)
 {
+  char string[CASS_UUID_STRING_LENGTH];
+  zval type;
+  zval uuid;
+  zval version;
   zval obj_zval;
   ZVAL_OBJ(&obj_zval, object);
-  // Function body will be updated below
+
+  php_driver_uuid *self = PHP_DRIVER_GET_UUID(&obj_zval);
+  HashTable *props = zend_std_get_properties(object);
+
+  cass_uuid_string(self->uuid, string);
+
+  type = php_driver_type_scalar(CASS_VALUE_TYPE_UUID);
+  zend_hash_str_update(props, "type", sizeof("type") - 1, &type);
+
+  ZVAL_STRING(&uuid, string);
+  zend_hash_str_update(props, "uuid", sizeof("uuid") - 1, &uuid);
+
+  ZVAL_LONG(&version, (long) cass_uuid_version(self->uuid));
+  zend_hash_str_update(props, "version", sizeof("version") - 1, &version);
+
+  return props;
+}
 #else
 static HashTable *
 php_driver_uuid_properties(zval *object TSRMLS_DC)
-{
-#endif
-#endif
 {
   char string[CASS_UUID_STRING_LENGTH];
   php5to7_zval type;
@@ -157,11 +175,7 @@ php_driver_uuid_properties(zval *object TSRMLS_DC)
   php5to7_zval version;
 
   php_driver_uuid *self = PHP_DRIVER_GET_UUID(object);
-  #if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
-  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
+  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
 
   cass_uuid_string(self->uuid, string);
 
@@ -178,6 +192,7 @@ php_driver_uuid_properties(zval *object TSRMLS_DC)
 
   return props;
 }
+#endif
 
 #if PHP_VERSION_ID < 80000
 static int

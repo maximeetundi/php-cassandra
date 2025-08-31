@@ -113,7 +113,10 @@ php_driver_value_compare(zval* zvalue1, zval* zvalue2 TSRMLS_DC) {
   case IS_STRING:
     return zend_binary_zval_strcmp(zvalue1, zvalue2);
 
-#if PHP_MAJOR_VERSION >= 7
+#if PHP_VERSION_ID >= 80000
+  case IS_OBJECT:
+    return Z_OBJ_P(zvalue1)->handlers->compare(zvalue1, zvalue2);
+#elif PHP_MAJOR_VERSION >= 7
   case IS_OBJECT:
     return Z_OBJ_P(zvalue1)->handlers->compare_objects(zvalue1, zvalue2 TSRMLS_CC);
 #else

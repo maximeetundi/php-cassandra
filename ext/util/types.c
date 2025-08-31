@@ -519,6 +519,22 @@ php_driver_type_string(php_driver_type *type, smart_str *string TSRMLS_DC)
   }
 }
 
+#if PHP_VERSION_ID >= 80000
+static php5to7_zval
+php_driver_type_scalar_new(CassValueType type)
+{
+  php5to7_zval ztype;
+  php_driver_type *scalar;
+
+  PHP5TO7_ZVAL_MAYBE_MAKE(ztype);
+  object_init_ex(PHP5TO7_ZVAL_MAYBE_P(ztype), php_driver_type_scalar_ce);
+  scalar = PHP_DRIVER_GET_TYPE(PHP5TO7_ZVAL_MAYBE_P(ztype));
+  scalar->type = type;
+  scalar->data_type = cass_data_type_new(type);
+
+  return ztype;
+}
+#else
 static php5to7_zval
 php_driver_type_scalar_new(CassValueType type TSRMLS_DC)
 {
@@ -533,6 +549,7 @@ php_driver_type_scalar_new(CassValueType type TSRMLS_DC)
 
   return ztype;
 }
+#endif
 
 
 const char *
@@ -634,6 +651,29 @@ php_driver_scalar_init(INTERNAL_FUNCTION_PARAMETERS)
 
 #define TYPE_CODE(m) type_ ## m
 
+#if PHP_VERSION_ID >= 80000
+php5to7_zval
+php_driver_type_scalar(CassValueType type)
+{
+  php5to7_zval result;
+  PHP5TO7_ZVAL_UNDEF(result);
+
+#define XX_SCALAR(name, value) \
+  if (value == type) { \
+    if (PHP5TO7_ZVAL_IS_UNDEF(PHP_DRIVER_G(TYPE_CODE(name)))) { \
+      PHP_DRIVER_G(TYPE_CODE(name)) = php_driver_type_scalar_new(type); \
+    } \
+    Z_ADDREF_P(PHP5TO7_ZVAL_MAYBE_P(PHP_DRIVER_G(TYPE_CODE(name)))); \
+    return PHP_DRIVER_G(TYPE_CODE(name)); \
+  }
+  PHP_DRIVER_SCALAR_TYPES_MAP(XX_SCALAR)
+#undef XX_SCALAR
+
+  zend_throw_exception_ex(php_driver_invalid_argument_exception_ce,
+                          0, "Invalid type");
+  return result;
+}
+#else
 php5to7_zval
 php_driver_type_scalar(CassValueType type TSRMLS_DC)
 {
@@ -655,6 +695,8 @@ php_driver_type_scalar(CassValueType type TSRMLS_DC)
                           0 TSRMLS_CC, "Invalid type");
   return result;
 }
+#endif
+
 #undef TYPE_CODE
 
 php5to7_zval

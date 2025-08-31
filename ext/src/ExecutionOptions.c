@@ -250,15 +250,16 @@ static zend_object_handlers php_driver_execution_options_handlers;
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_execution_options_properties(zend_object *object)
+{
+  return zend_std_get_properties(object);
+}
 #else
 static HashTable *
 php_driver_execution_options_properties(zval *object TSRMLS_DC)
-#endif
 {
-  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
-
-  return props;
+  return zend_std_get_properties(object TSRMLS_CC);
 }
+#endif
 
 static int
 php_driver_execution_options_compare(zval *obj1, zval *obj2 TSRMLS_DC)
@@ -282,7 +283,11 @@ php_driver_execution_options_free(php5to7_zend_object_free *object TSRMLS_DC)
   PHP5TO7_ZVAL_MAYBE_DESTROY(self->timeout);
   PHP5TO7_ZVAL_MAYBE_DESTROY(self->retry_policy);
 
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 

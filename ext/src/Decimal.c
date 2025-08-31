@@ -266,6 +266,9 @@ PHP_METHOD(Decimal, __construct)
 }
 /* }}} */
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 /* {{{ Decimal::__toString() */
 PHP_METHOD(Decimal, __toString)
 {
@@ -488,7 +491,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry php_driver_decimal_methods[] = {
   PHP_ME(Decimal, __construct, arginfo__construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-  PHP_ME(Decimal, __toString, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Decimal, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_ME(Decimal, type, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Decimal, value, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Decimal, scale, arginfo_none, ZEND_ACC_PUBLIC)

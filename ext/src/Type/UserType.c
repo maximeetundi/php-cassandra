@@ -275,10 +275,25 @@ php_driver_type_user_type_gc(zend_object *object, zval **table, int *n)
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_type_user_type_properties(zend_object *object)
+{
+  zval types;
+  zval obj_zval;
+  ZVAL_OBJ(&obj_zval, object);
+
+  php_driver_type *self  = PHP_DRIVER_GET_TYPE(&obj_zval);
+  HashTable      *props = zend_std_get_properties(object);
+
+  array_init(&types);
+  zend_hash_copy(Z_ARRVAL(types), &self->data.udt.types, (copy_ctor_func_t) zval_add_ref);
+  zend_hash_str_update(props,
+                       "types", sizeof("types") - 1,
+                       &types);
+
+  return props;
+}
 #else
 static HashTable *
 php_driver_type_user_type_properties(zval *object TSRMLS_DC)
-#endif
 {
   php5to7_zval types;
 
@@ -294,6 +309,7 @@ php_driver_type_user_type_properties(zval *object TSRMLS_DC)
 
   return props;
 }
+#endif
 
 static int
 php_driver_type_user_type_compare(zval *obj1, zval *obj2 TSRMLS_DC)
@@ -314,7 +330,11 @@ php_driver_type_user_type_free(php5to7_zend_object_free *object TSRMLS_DC)
   if (self->data.udt.type_name) efree(self->data.udt.type_name);
   zend_hash_destroy(&self->data.udt.types);
 
+  #if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 
@@ -342,7 +362,11 @@ void php_driver_define_TypeUserType(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_type_user_type_handlers.get_gc = php_driver_type_user_type_gc;
 #endif
+  #if PHP_VERSION_ID >= 80000
+  php_driver_type_user_type_handlers.compare = php_driver_type_user_type_compare;
+#else
   php_driver_type_user_type_handlers.compare_objects = php_driver_type_user_type_compare;
+#endif
   php_driver_type_user_type_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_type_user_type_ce->create_object = php_driver_type_user_type_new;
 }

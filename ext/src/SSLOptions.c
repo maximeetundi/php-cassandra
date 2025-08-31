@@ -28,18 +28,26 @@ static zend_object_handlers php_driver_ssl_handlers;
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_ssl_properties(zend_object *object)
+{
+  HashTable *props = zend_std_get_properties(object);
+  return props;
+}
 #else
 static HashTable *
 php_driver_ssl_properties(zval *object TSRMLS_DC)
-#endif
 {
   HashTable *props = zend_std_get_properties(object TSRMLS_CC);
-
   return props;
 }
+#endif
 
+#if PHP_VERSION_ID < 80000
 static int
 php_driver_ssl_compare(zval *obj1, zval *obj2 TSRMLS_DC)
+#else
+int
+php_driver_ssl_compare(zval *obj1, zval *obj2)
+#endif
 {
   if (Z_OBJCE_P(obj1) != Z_OBJCE_P(obj2))
     return 1; /* different classes */
@@ -47,27 +55,61 @@ php_driver_ssl_compare(zval *obj1, zval *obj2 TSRMLS_DC)
   return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj2);
 }
 
+#if PHP_VERSION_ID >= 80000
 static void
-php_driver_ssl_free(php5to7_zend_object_free *object TSRMLS_DC)
+php_driver_ssl_free(zend_object *object)
 {
-  php_driver_ssl *self = PHP5TO7_ZEND_OBJECT_GET(ssl, object);
-
+  php_driver_ssl *self = (php_driver_ssl *) ((char *) (object) - XtOffsetOf(php_driver_ssl, std));
   cass_ssl_free(self->ssl);
-
-  zend_object_std_dtor(&self->zval TSRMLS_CC);
-  PHP5TO7_MAYBE_EFREE(self);
+  zend_object_std_dtor(&self->std);
 }
+#else
+static void
+php_driver_ssl_free(void *object TSRMLS_DC)
+{
+  php_driver_ssl *self = (php_driver_ssl *) object;
+  cass_ssl_free(self->ssl);
+  zend_object_std_dtor(&self->zval TSRMLS_CC);
+  efree(self);
+}
+#endif
 
-static php5to7_zend_object
+#if PHP_VERSION_ID >= 80000
+static zend_object*
+php_driver_ssl_new(zend_class_entry *ce)
+{
+  php_driver_ssl *self = ecalloc(1, sizeof(php_driver_ssl) + zend_object_properties_size(ce));
+
+  self->ssl = cass_ssl_new();
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_ssl_handlers;
+
+  return &self->std;
+}
+#else
+static zend_object_value
 php_driver_ssl_new(zend_class_entry *ce TSRMLS_DC)
 {
-  php_driver_ssl *self =
-      PHP5TO7_ZEND_OBJECT_ECALLOC(ssl, ce);
+  zend_object_value retval;
+  php_driver_ssl *self;
+
+  self = (php_driver_ssl *) ecalloc(1, sizeof(php_driver_ssl));
 
   self->ssl = cass_ssl_new();
 
-  PHP5TO7_ZEND_OBJECT_INIT(ssl, self, ce);
+  zend_object_std_init(&self->zval, ce TSRMLS_CC);
+  object_properties_init(&self->zval, ce TSRMLS_CC);
+
+  retval.handle = zend_objects_store_put(self,
+                                         (zend_objects_store_dtor_t) zend_objects_destroy_object,
+                                         php_driver_ssl_free,
+                                         NULL TSRMLS_CC);
+  retval.handlers = &php_driver_ssl_handlers;
+
+  return retval;
 }
+#endif
 
 void php_driver_define_SSLOptions(TSRMLS_D)
 {
@@ -75,14 +117,20 @@ void php_driver_define_SSLOptions(TSRMLS_D)
 
   INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\SSLOptions", php_driver_ssl_methods);
   php_driver_ssl_ce = zend_register_internal_class(&ce TSRMLS_CC);
-  php_driver_ssl_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;
+  php_driver_ssl_ce->ce_flags     |= ZEND_ACC_FINAL;
   php_driver_ssl_ce->create_object = php_driver_ssl_new;
 
   memcpy(&php_driver_ssl_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+
+#if PHP_VERSION_ID >= 80000
+  php_driver_ssl_handlers.offset = XtOffsetOf(php_driver_ssl, std);
+  php_driver_ssl_handlers.free_obj = php_driver_ssl_free;
   php_driver_ssl_handlers.get_properties = php_driver_ssl_properties;
-  /* compare_objects was removed in PHP 8 */
-#if PHP_VERSION_ID < 80000
-  php_driver_ssl_handlers.compare_objects = php_driver_ssl_compare;
-#endif
+  php_driver_ssl_handlers.compare = php_driver_ssl_compare;
   php_driver_ssl_handlers.clone_obj = NULL;
+#else
+  php_driver_ssl_handlers.get_properties = php_driver_ssl_properties;
+  php_driver_ssl_handlers.compare_objects = php_driver_ssl_compare;
+  php_driver_ssl_handlers.clone_obj = NULL;
+#endif
 }

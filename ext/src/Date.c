@@ -150,6 +150,9 @@ PHP_METHOD(Date, fromDateTime)
 /* }}} */
 
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 /* {{{ Date::__toString() */
 PHP_METHOD(Date, __toString)
 {
@@ -162,7 +165,7 @@ PHP_METHOD(Date, __toString)
 
   self = PHP_DRIVER_GET_DATE(getThis());
 
-  spprintf(&ret, 0, PHP_DRIVER_NAMESPACE "\\Date(seconds=%" LL_FORMAT "d)", cass_date_time_to_epoch(self->date, 0));
+  spprintf(&ret, 0, PHP_DRIVER_NAMESPACE "\\Date(seconds=%\" LL_FORMAT \"d)", cass_date_time_to_epoch(self->date, 0));
   PHP5TO7_RETVAL_STRING(ret);
   efree(ret);
 }
@@ -189,7 +192,7 @@ static zend_function_entry php_driver_date_methods[] = {
   PHP_ME(Date, seconds, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Date, toDateTime, arginfo_time, ZEND_ACC_PUBLIC)
   PHP_ME(Date, fromDateTime, arginfo_datetime, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(Date, __toString, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Date, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_FE_END
 };
 

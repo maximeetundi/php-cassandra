@@ -74,15 +74,14 @@ cass_int64_t php_driver_time_now_ns() {
 #endif
 
 static int
-to_string(zval *result, php_driver_time *time TSRMLS_DC)
-{
+to_string(zval *result, php_driver_time *time) {
   char *string;
 #ifdef WIN32
   spprintf(&string, 0, "%I64d", (long long int) time->time);
 #else
   spprintf(&string, 0, "%lld", (long long int) time->time);
 #endif
-  PHP5TO7_ZVAL_STRING(result, string);
+  ZVAL_STRING(result, string);
   efree(string);
   return SUCCESS;
 }
@@ -93,11 +92,11 @@ php_driver_time_init(INTERNAL_FUNCTION_PARAMETERS)
   zval *nanoseconds = NULL;
   php_driver_time *self;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &nanoseconds) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "|z", &nanoseconds) == FAILURE) {
     return;
   }
 
-  if (getThis() && instanceof_function(Z_OBJCE_P(getThis()), php_driver_time_ce TSRMLS_CC)) {
+  if (getThis() && instanceof_function(Z_OBJCE_P(getThis()), php_driver_time_ce)) {
     self = PHP_DRIVER_GET_TIME(getThis());
   } else {
     object_init_ex(return_value, php_driver_time_ce);
@@ -111,7 +110,7 @@ php_driver_time_init(INTERNAL_FUNCTION_PARAMETERS)
       self->time = Z_LVAL_P(nanoseconds);
     } else if (Z_TYPE_P(nanoseconds) == IS_STRING) {
       if (!php_driver_parse_bigint(Z_STRVAL_P(nanoseconds), Z_STRLEN_P(nanoseconds),
-                                      &self->time TSRMLS_CC)) {
+                                      &self->time)) {
         return;
       }
     } else {
@@ -134,8 +133,8 @@ PHP_METHOD(Time, __construct)
 /* {{{ Time::type() */
 PHP_METHOD(Time, type)
 {
-  php5to7_zval type = php_driver_type_scalar(CASS_VALUE_TYPE_TIME TSRMLS_CC);
-  RETURN_ZVAL(PHP5TO7_ZVAL_MAYBE_P(type), 1, 1);
+  zval type = php_driver_type_scalar(CASS_VALUE_TYPE_TIME);
+  RETURN_ZVAL(&type, 1, 1);
 }
 /* }}} */
 
@@ -152,28 +151,30 @@ PHP_METHOD(Time, fromDateTime)
 {
   php_driver_time *self;
   zval *zdatetime;
-  php5to7_zval retval;
+  zval retval;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zdatetime) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &zdatetime, php_date_get_date_ce()) == FAILURE) {
     return;
   }
 
-  zend_call_method_with_0_params(PHP5TO7_ZVAL_MAYBE_ADDR_OF(zdatetime),
+  zend_call_method_with_0_params(Z_OBJ_P(zdatetime),
                                  php_date_get_date_ce(),
                                  NULL,
                                  "gettimestamp",
                                  &retval);
 
-  if (!PHP5TO7_ZVAL_IS_UNDEF(retval) &&
-      Z_TYPE_P(PHP5TO7_ZVAL_MAYBE_P(retval)) == IS_LONG) {
+  if (Z_TYPE(retval) == IS_LONG) {
     object_init_ex(return_value, php_driver_time_ce);
     self = PHP_DRIVER_GET_TIME(return_value);
-    self->time = cass_time_from_epoch(PHP5TO7_Z_LVAL_MAYBE_P(retval));
+    self->time = cass_time_from_epoch(Z_LVAL(retval));
     zval_ptr_dtor(&retval);
     return;
   }
 }
 /* }}} */
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 
 /* {{{ Time::__toString() */
 PHP_METHOD(Time, __toString)
@@ -185,7 +186,7 @@ PHP_METHOD(Time, __toString)
   }
 
   self = PHP_DRIVER_GET_TIME(getThis());
-  to_string(return_value, self TSRMLS_CC);
+  to_string(return_value, self);
 }
 /* }}} */
 
@@ -205,81 +206,79 @@ static zend_function_entry php_driver_time_methods[] = {
   PHP_ME(Time, type, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Time, seconds, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Time, fromDateTime, arginfo_datetime, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(Time, __toString, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Time, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_FE_END
 };
 
-static php_driver_value_handlers php_driver_time_handlers;
+static zend_object_handlers php_driver_time_handlers;
 
+#if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_time_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
-  #if PHP_VERSION_ID >= 80000
-  #if PHP_VERSION_ID >= 80000
   return zend_std_get_properties(object);
-#else
-  return zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
-#else
-  return zend_std_get_properties(object TSRMLS_CC);
-#endif
 }
+#else
+static HashTable *
+php_driver_time_gc(zval *object, zval **table, int *n)
+{
+  *table = NULL;
+  *n = 0;
+  return zend_std_get_properties(object TSRMLS_CC);
+}
+#endif
 
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_time_properties(zend_object *object)
-#else
-#if PHP_VERSION_ID >= 80000
-static HashTable *
-php_driver_time_properties(zend_object *object)
 {
+  zval type;
+  zval nanoseconds;
   zval obj_zval;
   ZVAL_OBJ(&obj_zval, object);
-  // Function body will be updated below
+
+  php_driver_time *self = PHP_DRIVER_GET_TIME(&obj_zval);
+  HashTable      *props = zend_std_get_properties(object);
+
+  type = php_driver_type_scalar(CASS_VALUE_TYPE_TIME);
+  zend_hash_update(props, zend_string_init("type", 4, 0), &type);
+
+  to_string(&nanoseconds, self);
+  zend_hash_update(props, zend_string_init("nanoseconds", 11, 0), &nanoseconds);
+
+  return props;
+}
 #else
 static HashTable *
 php_driver_time_properties(zval *object TSRMLS_DC)
 {
-#endif
-#endif
-{
-  php5to7_zval type;
-  php5to7_zval nanoseconds;
+  zval* type;
+  zval* nanoseconds;
 
-  #if PHP_VERSION_ID >= 80000
-  zval obj_zval;
-  ZVAL_OBJ(&obj_zval, object);
   php_driver_time *self = PHP_DRIVER_GET_TIME(object);
-  #if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
-  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
-  HashTable *props = zend_std_get_properties(object);
-#else
-  php_driver_time *self = PHP_DRIVER_GET_TIME(object);
-  #if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
-  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
-#endif
+  HashTable      *props = zend_std_get_properties(object TSRMLS_CC);
 
-  type = php_driver_type_scalar(CASS_VALUE_TYPE_TIME TSRMLS_CC);
-  PHP5TO7_ZEND_HASH_UPDATE(props, "type", sizeof("type"), PHP5TO7_ZVAL_MAYBE_P(type), sizeof(zval));
+  MAKE_STD_ZVAL(type);
+  *type = php_driver_type_scalar(CASS_VALUE_TYPE_TIME TSRMLS_CC);
+  zend_hash_update(props, "type", sizeof("type"), &type, sizeof(zval), NULL);
 
-  PHP5TO7_ZVAL_MAYBE_MAKE(nanoseconds);
-  to_string(PHP5TO7_ZVAL_MAYBE_P(nanoseconds), self TSRMLS_CC);
-  PHP5TO7_ZEND_HASH_UPDATE(props, "nanoseconds", sizeof("nanoseconds"), PHP5TO7_ZVAL_MAYBE_P(nanoseconds), sizeof(zval));
+  MAKE_STD_ZVAL(nanoseconds);
+  to_string(nanoseconds, self TSRMLS_CC);
+  zend_hash_update(props, "nanoseconds", sizeof("nanoseconds"), &nanoseconds, sizeof(zval), NULL);
 
   return props;
 }
+#endif
 
 #if PHP_VERSION_ID < 80000
 static int
 php_driver_time_compare(zval *obj1, zval *obj2 TSRMLS_DC)
+#else
+int
+php_driver_time_compare(zval *obj1, zval *obj2)
+#endif
 {
   php_driver_time *time1 = NULL;
   php_driver_time *time2 = NULL;
@@ -291,50 +290,68 @@ php_driver_time_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 
   return PHP_DRIVER_COMPARE(time1->time, time2->time);
 }
-#endif
 
+#if PHP_VERSION_ID < 80000
 static unsigned
 php_driver_time_hash_value(zval *obj TSRMLS_DC)
 {
   php_driver_time *self = PHP_DRIVER_GET_TIME(obj);
   return php_driver_bigint_hash(self->time);
 }
-
-#if PHP_VERSION_ID < 80000
-static void
-php_driver_time_free(php5to7_zend_object_free *object TSRMLS_DC)
-{
-  php_driver_time *self = PHP5TO7_ZEND_OBJECT_GET(time, object);
-
-  #if PHP_VERSION_ID >= 80000
-  zend_object_std_dtor(&self->std);
-#else
-  zend_object_std_dtor(&self->zval TSRMLS_CC);
 #endif
-  PHP5TO7_MAYBE_EFREE(self);
+
+#if PHP_VERSION_ID >= 80000
+static void
+php_driver_time_free(zend_object *object)
+{
+  php_driver_time *self = (php_driver_time *) ((char *) (object) - XtOffsetOf(php_driver_time, std));
+  zend_object_std_dtor(&self->std);
+}
+#else
+static void
+php_driver_time_free(void *object TSRMLS_DC)
+{
+  php_driver_time *self = (php_driver_time *) object;
+  zend_object_std_dtor(&self->zval TSRMLS_CC);
+  efree(self);
 }
 #endif
 
-static php5to7_zend_object
+#if PHP_VERSION_ID >= 80000
+static zend_object*
+php_driver_time_new(zend_class_entry *ce)
+{
+  php_driver_time *self = ecalloc(1, sizeof(php_driver_time) + zend_object_properties_size(ce));
+
+  self->time = 0;
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_time_handlers;
+
+  return &self->std;
+}
+#else
+static zend_object_value
 php_driver_time_new(zend_class_entry *ce TSRMLS_DC)
 {
-  php_driver_time *self =
-      PHP5TO7_ZEND_OBJECT_ECALLOC(time, ce);
+  zend_object_value retval;
+  php_driver_time *self;
+
+  self = (php_driver_time *) ecalloc(1, sizeof(php_driver_time));
 
   self->time = 0;
 
-  #if PHP_VERSION_ID >= 80000
-  zend_object_std_init(&self->std, ce);
-  object_properties_init(&self->std, ce);
-  self->std.handlers = &php_driver_time_handlers.std;
-  return &self->std;
-#else
-  zend_object_std_init(&self->zval, ce);
-  object_properties_init(&self->zval, ce);
-  self->zval.handlers = &php_driver_time_handlers;
-  return &self->zval;
-#endif
+  zend_object_std_init(&self->zval, ce TSRMLS_CC);
+  object_properties_init(&self->zval, ce TSRMLS_CC);
+
+  retval.handle = zend_objects_store_put(self,
+                                         (zend_objects_store_dtor_t) zend_objects_destroy_object,
+                                         php_driver_time_free, NULL TSRMLS_CC);
+  retval.handlers = &php_driver_time_handlers;
+
+  return retval;
 }
+#endif
 
 void php_driver_define_Time(TSRMLS_D)
 {
@@ -342,17 +359,26 @@ void php_driver_define_Time(TSRMLS_D)
 
   INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\Time", php_driver_time_methods);
   php_driver_time_ce = zend_register_internal_class(&ce TSRMLS_CC);
-  zend_class_implements(php_driver_time_ce TSRMLS_CC, 1, php_driver_value_ce);
+  zend_class_implements(php_driver_time_ce, 1, php_driver_value_ce);
   memcpy(&php_driver_time_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_time_handlers.std.get_properties  = php_driver_time_properties;
-#if PHP_VERSION_ID >= 50400
-  php_driver_time_handlers.std.get_gc          = php_driver_time_gc;
-#endif
-#if PHP_VERSION_ID < 80000
-  php_driver_time_handlers.std.compare_objects = php_driver_time_compare;
-#endif
-  php_driver_time_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
-  php_driver_time_ce->create_object = php_driver_time_new;
 
+#if PHP_VERSION_ID >= 80000
+  php_driver_time_handlers.offset = XtOffsetOf(php_driver_time, std);
+  php_driver_time_handlers.free_obj = php_driver_time_free;
+  php_driver_time_handlers.get_properties = php_driver_time_properties;
+  php_driver_time_handlers.get_gc = php_driver_time_gc;
+  php_driver_time_handlers.compare = php_driver_time_compare;
+  php_driver_time_handlers.clone_obj = NULL;
+#else
+  php_driver_time_handlers.get_properties = php_driver_time_properties;
+  php_driver_time_handlers.compare_objects = php_driver_time_compare;
+  php_driver_time_handlers.clone_obj = NULL;
+#if PHP_VERSION_ID >= 50400
+  php_driver_time_handlers.get_gc = php_driver_time_gc;
+#endif
   php_driver_time_handlers.hash_value = php_driver_time_hash_value;
+#endif
+
+  php_driver_time_ce->ce_flags |= ZEND_ACC_FINAL;
+  php_driver_time_ce->create_object = php_driver_time_new;
 }

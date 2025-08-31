@@ -201,13 +201,7 @@ php5to7_string_compare(php5to7_string s1, php5to7_string s2)
   ZEND_HASH_FOREACH_NUM_KEY_VAL(ht, _h, _val)
 
 #define PHP5TO7_ZEND_HASH_FOREACH_STR_KEY_VAL(ht, _key, _val) \
-  ZEND_HASH_FOREACH(ht, 0);                                   \
-  if (_p->key) {                                              \
-    (_key) = _p->key->val;                                    \
-  }  else {                                                   \
-    (_key) = NULL;                                            \
-  }                                                           \
-  _val = _z;
+  ZEND_HASH_FOREACH_STR_KEY_VAL(ht, _key, _val)
 
 #define PHP5TO7_ZEND_HASH_FOREACH_END(ht) ZEND_HASH_FOREACH_END()
 

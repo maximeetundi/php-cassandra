@@ -159,10 +159,27 @@ php_driver_type_map_gc(zend_object *object, zval **table, int *n)
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_type_map_properties(zend_object *object)
+{
+  zval obj_zval;
+  ZVAL_OBJ(&obj_zval, object);
+  php_driver_type *self  = PHP_DRIVER_GET_TYPE(&obj_zval);
+  HashTable      *props = zend_std_get_properties(object);
+
+  zend_hash_str_update(props,
+                       "keyType", sizeof("keyType") - 1,
+                       &self->data.map.key_type);
+  Z_TRY_ADDREF_P(&self->data.map.key_type);
+
+  zend_hash_str_update(props,
+                       "valueType", sizeof("valueType") - 1,
+                       &self->data.map.value_type);
+  Z_TRY_ADDREF_P(&self->data.map.value_type);
+
+  return props;
+}
 #else
 static HashTable *
 php_driver_type_map_properties(zval *object TSRMLS_DC)
-#endif
 {
   php_driver_type *self  = PHP_DRIVER_GET_TYPE(object);
   HashTable      *props = zend_std_get_properties(object TSRMLS_CC);
@@ -179,6 +196,7 @@ php_driver_type_map_properties(zval *object TSRMLS_DC)
 
   return props;
 }
+#endif
 
 static int
 php_driver_type_map_compare(zval *obj1, zval *obj2 TSRMLS_DC)
@@ -198,7 +216,11 @@ php_driver_type_map_free(php5to7_zend_object_free *object TSRMLS_DC)
   PHP5TO7_ZVAL_MAYBE_DESTROY(self->data.map.key_type);
   PHP5TO7_ZVAL_MAYBE_DESTROY(self->data.map.value_type);
 
+  #if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 
@@ -227,7 +249,11 @@ void php_driver_define_TypeMap(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_type_map_handlers.get_gc = php_driver_type_map_gc;
 #endif
+  #if PHP_VERSION_ID >= 80000
+  php_driver_type_map_handlers.compare = php_driver_type_map_compare;
+#else
   php_driver_type_map_handlers.compare_objects = php_driver_type_map_compare;
+#endif
   php_driver_type_map_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_type_map_ce->create_object = php_driver_type_map_new;
 }

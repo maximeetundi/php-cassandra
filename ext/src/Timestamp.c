@@ -30,7 +30,7 @@ php_driver_timestamp_init(INTERNAL_FUNCTION_PARAMETERS)
   php_driver_timestamp *self;
   cass_int64_t value = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &seconds, &microseconds) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "|ll", &seconds, &microseconds) == FAILURE) {
     return;
   }
 
@@ -49,7 +49,7 @@ php_driver_timestamp_init(INTERNAL_FUNCTION_PARAMETERS)
   value += microseconds / 1000;
   value += (seconds * 1000);
 
-  if (getThis() && instanceof_function(Z_OBJCE_P(getThis()), php_driver_timestamp_ce TSRMLS_CC)) {
+  if (getThis() && instanceof_function(Z_OBJCE_P(getThis()), php_driver_timestamp_ce)) {
     self = PHP_DRIVER_GET_TIMESTAMP(getThis());
   } else {
     object_init_ex(return_value, php_driver_timestamp_ce);
@@ -69,8 +69,8 @@ PHP_METHOD(Timestamp, __construct)
 /* {{{ Timestamp::type() */
 PHP_METHOD(Timestamp, type)
 {
-  php5to7_zval type = php_driver_type_scalar(CASS_VALUE_TYPE_TIMESTAMP TSRMLS_CC);
-  RETURN_ZVAL(PHP5TO7_ZVAL_MAYBE_P(type), 1, 1);
+  zval type = php_driver_type_scalar(CASS_VALUE_TYPE_TIMESTAMP);
+  RETURN_ZVAL(&type, 1, 1);
 }
 /* }}} */
 
@@ -92,7 +92,7 @@ PHP_METHOD(Timestamp, microtime)
   long sec = -1;
   double usec = 0.0f;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &get_as_float) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "|b", &get_as_float) == FAILURE) {
     return;
   }
 
@@ -105,7 +105,7 @@ PHP_METHOD(Timestamp, microtime)
   sec    = (long) (self->timestamp / 1000);
   usec   = (double) ((self->timestamp - (sec * 1000)) / 1000.00);
   spprintf(&ret, 0, "%.8F %ld", usec, sec);
-  PHP5TO7_RETVAL_STRING(ret);
+  RETVAL_STRING(ret);
   efree(ret);
 }
 /* }}} */
@@ -126,22 +126,20 @@ PHP_METHOD(Timestamp, toDateTime)
 
   self = PHP_DRIVER_GET_TIMESTAMP(getThis());
 
-  PHP5TO7_ZVAL_MAYBE_MAKE(datetime);
-  php_date_instantiate(php_date_get_date_ce(), datetime TSRMLS_CC);
+  php_date_instantiate(php_date_get_date_ce(), datetime);
 
-#if PHP_MAJOR_VERSION >= 7
   datetime_obj = php_date_obj_from_obj(Z_OBJ_P(datetime));
-#else
-  datetime_obj = zend_object_store_get_object(datetime TSRMLS_CC);
-#endif
 
   str_len      = spprintf(&str, 0, "@%ld", (long) (self->timestamp / 1000));
-  php_date_initialize(datetime_obj, str, str_len, NULL, NULL, 0 TSRMLS_CC);
+  php_date_initialize(datetime_obj, str, str_len, NULL, NULL, 0);
   efree(str);
 
   RETVAL_ZVAL(datetime, 0, 1);
 }
 /* }}} */
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 
 /* {{{ Timestamp::__toString() */
 PHP_METHOD(Timestamp, __toString)
@@ -156,7 +154,7 @@ PHP_METHOD(Timestamp, __toString)
   self = PHP_DRIVER_GET_TIMESTAMP(getThis());
 
   spprintf(&ret, 0, "%lld", (long long int) self->timestamp);
-  PHP5TO7_RETVAL_STRING(ret);
+  RETVAL_STRING(ret);
   efree(ret);
 }
 /* }}} */
@@ -176,80 +174,97 @@ ZEND_END_ARG_INFO()
 static zend_function_entry php_driver_timestamp_methods[] = {
   PHP_ME(Timestamp, __construct, arginfo__construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
   PHP_ME(Timestamp, type, arginfo_none, ZEND_ACC_PUBLIC)
-  PHP_ME(Timestamp, time, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Timestamp, time, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Timestamp, microtime, arginfo_microtime, ZEND_ACC_PUBLIC)
-  PHP_ME(Timestamp, toDateTime, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Timestamp, __toString, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Timestamp, toDateTime, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Timestamp, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_FE_END
 };
 
-static php_driver_value_handlers php_driver_timestamp_handlers;
+static zend_object_handlers php_driver_timestamp_handlers;
 
+#if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_timestamp_gc(zend_object *object, zval **table, int *n)
 {
   *table = NULL;
   *n = 0;
-  #if PHP_VERSION_ID >= 80000
-  #if PHP_VERSION_ID >= 80000
   return zend_std_get_properties(object);
-#else
-  return zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
-#else
-  return zend_std_get_properties(object TSRMLS_CC);
-#endif
 }
+#else
+static HashTable *
+php_driver_timestamp_gc(zval *object, zval **table, int *n)
+{
+  *table = NULL;
+  *n = 0;
+  return zend_std_get_properties(object TSRMLS_CC);
+}
+#endif
 
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_timestamp_properties(zend_object *object)
-#else
-#if PHP_VERSION_ID >= 80000
-static HashTable *
-php_driver_timestamp_properties(zend_object *object)
 {
+  zval type;
+  zval seconds;
+  zval microseconds;
   zval obj_zval;
   ZVAL_OBJ(&obj_zval, object);
-  // Function body will be updated below
-#else
-static HashTable *
-php_driver_timestamp_properties(zval *object TSRMLS_DC)
-{
-#endif
-#endif
-{
-  php5to7_zval type;
-  php5to7_zval seconds;
-  php5to7_zval microseconds;
 
-  php_driver_timestamp *self = PHP_DRIVER_GET_TIMESTAMP(object);
-  #if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
-  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
+  php_driver_timestamp *self = PHP_DRIVER_GET_TIMESTAMP(&obj_zval);
+  HashTable           *props = zend_std_get_properties(object);
 
   long sec  = (long) (self->timestamp / 1000);
   long usec = (long) ((self->timestamp - (sec * 1000)) * 1000);
 
-  type = php_driver_type_scalar(CASS_VALUE_TYPE_TIMESTAMP TSRMLS_CC);
-  PHP5TO7_ZEND_HASH_UPDATE(props, "type", sizeof("type"), PHP5TO7_ZVAL_MAYBE_P(type), sizeof(zval));
+  type = php_driver_type_scalar(CASS_VALUE_TYPE_TIMESTAMP);
+  zend_hash_update(props, zend_string_init("type", 4, 0), &type);
 
-  PHP5TO7_ZVAL_MAYBE_MAKE(seconds);
-  ZVAL_LONG(PHP5TO7_ZVAL_MAYBE_P(seconds), sec);
-  PHP5TO7_ZEND_HASH_UPDATE(props, "seconds", sizeof("seconds"), PHP5TO7_ZVAL_MAYBE_P(seconds), sizeof(zval));
+  ZVAL_LONG(&seconds, sec);
+  zend_hash_update(props, zend_string_init("seconds", 7, 0), &seconds);
 
-  PHP5TO7_ZVAL_MAYBE_MAKE(microseconds);
-  ZVAL_LONG(PHP5TO7_ZVAL_MAYBE_P(microseconds), usec);
-  PHP5TO7_ZEND_HASH_UPDATE(props, "microseconds", sizeof("microseconds"), PHP5TO7_ZVAL_MAYBE_P(microseconds), sizeof(zval));
+  ZVAL_LONG(&microseconds, usec);
+  zend_hash_update(props, zend_string_init("microseconds", 12, 0), &microseconds);
 
   return props;
 }
+#else
+static HashTable *
+php_driver_timestamp_properties(zval *object TSRMLS_DC)
+{
+  zval* type;
+  zval* seconds;
+  zval* microseconds;
+
+  php_driver_timestamp *self = PHP_DRIVER_GET_TIMESTAMP(object);
+  HashTable           *props = zend_std_get_properties(object TSRMLS_CC);
+
+  long sec  = (long) (self->timestamp / 1000);
+  long usec = (long) ((self->timestamp - (sec * 1000)) * 1000);
+
+  MAKE_STD_ZVAL(type);
+  *type = php_driver_type_scalar(CASS_VALUE_TYPE_TIMESTAMP TSRMLS_CC);
+  zend_hash_update(props, "type", sizeof("type"), &type, sizeof(zval), NULL);
+
+  MAKE_STD_ZVAL(seconds);
+  ZVAL_LONG(seconds, sec);
+  zend_hash_update(props, "seconds", sizeof("seconds"), &seconds, sizeof(zval), NULL);
+
+  MAKE_STD_ZVAL(microseconds);
+  ZVAL_LONG(microseconds, usec);
+  zend_hash_update(props, "microseconds", sizeof("microseconds"), &microseconds, sizeof(zval), NULL);
+
+  return props;
+}
+#endif
 
 #if PHP_VERSION_ID < 80000
 static int
 php_driver_timestamp_compare(zval *obj1, zval *obj2 TSRMLS_DC)
+#else
+int
+php_driver_timestamp_compare(zval *obj1, zval *obj2)
+#endif
 {
   php_driver_timestamp *timestamp1 = NULL;
   php_driver_timestamp *timestamp2 = NULL;
@@ -261,48 +276,65 @@ php_driver_timestamp_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 
   return PHP_DRIVER_COMPARE(timestamp1->timestamp, timestamp2->timestamp);
 }
-#endif
 
+#if PHP_VERSION_ID < 80000
 static unsigned
 php_driver_timestamp_hash_value(zval *obj TSRMLS_DC)
 {
   php_driver_timestamp *self = PHP_DRIVER_GET_TIMESTAMP(obj);
   return php_driver_bigint_hash(self->timestamp);
 }
-
-#if PHP_VERSION_ID < 80000
-static void
-php_driver_timestamp_free(php5to7_zend_object_free *object TSRMLS_DC)
-{
-  php_driver_timestamp *self = PHP5TO7_ZEND_OBJECT_GET(timestamp, object);
-
-  #if PHP_VERSION_ID >= 80000
-  zend_object_std_dtor(&self->std);
-#else
-  zend_object_std_dtor(&self->zval TSRMLS_CC);
 #endif
-  PHP5TO7_MAYBE_EFREE(self);
+
+#if PHP_VERSION_ID >= 80000
+static void
+php_driver_timestamp_free(zend_object *object)
+{
+  php_driver_timestamp *self = (php_driver_timestamp *) ((char *) (object) - XtOffsetOf(php_driver_timestamp, std));
+  zend_object_std_dtor(&self->std);
+}
+#else
+static void
+php_driver_timestamp_free(void *object TSRMLS_DC)
+{
+  php_driver_timestamp *self = (php_driver_timestamp *) object;
+  zend_object_std_dtor(&self->zval TSRMLS_CC);
+  efree(self);
 }
 #endif
 
-static php5to7_zend_object
-php_driver_timestamp_new(zend_class_entry *ce TSRMLS_DC)
+#if PHP_VERSION_ID >= 80000
+static zend_object*
+php_driver_timestamp_new(zend_class_entry *ce)
 {
-  php_driver_timestamp *self =
-      PHP5TO7_ZEND_OBJECT_ECALLOC(timestamp, ce);
+  php_driver_timestamp *self = ecalloc(1, sizeof(php_driver_timestamp) + zend_object_properties_size(ce));
 
-  #if PHP_VERSION_ID >= 80000
   zend_object_std_init(&self->std, ce);
   object_properties_init(&self->std, ce);
-  self->std.handlers = &php_driver_timestamp_handlers.std;
+  self->std.handlers = &php_driver_timestamp_handlers;
+
   return &self->std;
-#else
-  zend_object_std_init(&self->zval, ce);
-  object_properties_init(&self->zval, ce);
-  self->zval.handlers = &php_driver_timestamp_handlers;
-  return &self->zval;
-#endif
 }
+#else
+static zend_object_value
+php_driver_timestamp_new(zend_class_entry *ce TSRMLS_DC)
+{
+  zend_object_value retval;
+  php_driver_timestamp *self;
+
+  self = (php_driver_timestamp *) ecalloc(1, sizeof(php_driver_timestamp));
+
+  zend_object_std_init(&self->zval, ce TSRMLS_CC);
+  object_properties_init(&self->zval, ce TSRMLS_CC);
+
+  retval.handle = zend_objects_store_put(self,
+                                         (zend_objects_store_dtor_t) zend_objects_destroy_object,
+                                         php_driver_timestamp_free, NULL TSRMLS_CC);
+  retval.handlers = &php_driver_timestamp_handlers;
+
+  return retval;
+}
+#endif
 
 void php_driver_define_Timestamp(TSRMLS_D)
 {
@@ -310,18 +342,26 @@ void php_driver_define_Timestamp(TSRMLS_D)
 
   INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\Timestamp", php_driver_timestamp_methods);
   php_driver_timestamp_ce = zend_register_internal_class(&ce TSRMLS_CC);
-  zend_class_implements(php_driver_timestamp_ce TSRMLS_CC, 1, php_driver_value_ce);
+  zend_class_implements(php_driver_timestamp_ce, 1, php_driver_value_ce);
   memcpy(&php_driver_timestamp_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_timestamp_handlers.std.get_properties  = php_driver_timestamp_properties;
-#if PHP_VERSION_ID >= 50400
-  php_driver_timestamp_handlers.std.get_gc          = php_driver_timestamp_gc;
-#endif
-#if PHP_VERSION_ID < 80000
-  php_driver_timestamp_handlers.std.compare_objects = php_driver_timestamp_compare;
-#endif
-  php_driver_timestamp_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
-  php_driver_timestamp_ce->create_object = php_driver_timestamp_new;
 
+#if PHP_VERSION_ID >= 80000
+  php_driver_timestamp_handlers.offset = XtOffsetOf(php_driver_timestamp, std);
+  php_driver_timestamp_handlers.free_obj = php_driver_timestamp_free;
+  php_driver_timestamp_handlers.get_properties = php_driver_timestamp_properties;
+  php_driver_timestamp_handlers.get_gc = php_driver_timestamp_gc;
+  php_driver_timestamp_handlers.compare = php_driver_timestamp_compare;
+  php_driver_timestamp_handlers.clone_obj = NULL;
+#else
+  php_driver_timestamp_handlers.get_properties = php_driver_timestamp_properties;
+  php_driver_timestamp_handlers.compare_objects = php_driver_timestamp_compare;
+  php_driver_timestamp_handlers.clone_obj = NULL;
+#if PHP_VERSION_ID >= 50400
+  php_driver_timestamp_handlers.get_gc = php_driver_timestamp_gc;
+#endif
   php_driver_timestamp_handlers.hash_value = php_driver_timestamp_hash_value;
-  php_driver_timestamp_handlers.std.clone_obj = NULL;
+#endif
+
+  php_driver_timestamp_ce->ce_flags |= ZEND_ACC_FINAL;
+  php_driver_timestamp_ce->create_object = php_driver_timestamp_new;
 }

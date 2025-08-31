@@ -51,19 +51,16 @@ static zend_object_handlers php_driver_future_close_handlers;
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_future_close_properties(zend_object *object)
+{
+  return zend_std_get_properties(object);
+}
 #else
 static HashTable *
 php_driver_future_close_properties(zval *object TSRMLS_DC)
-#endif
 {
-#if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
-  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
-#endif
-
-  return props;
+  return zend_std_get_properties(object TSRMLS_CC);
 }
+#endif
 
 static int
 php_driver_future_close_compare(zval *obj1, zval *obj2 TSRMLS_DC)
@@ -83,7 +80,11 @@ php_driver_future_close_free(php5to7_zend_object_free *object TSRMLS_DC)
   if (self->future)
     cass_future_free(self->future);
 
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 

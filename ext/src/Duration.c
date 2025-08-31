@@ -149,6 +149,9 @@ PHP_METHOD(Duration, __construct)
   php_driver_duration_init(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 PHP_METHOD(Duration, __toString)
 {
   char* rep;
@@ -219,7 +222,7 @@ static zend_function_entry php_driver_duration_methods[] = {
   PHP_ME(Duration, months, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Duration, days, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Duration, nanos, arginfo_none, ZEND_ACC_PUBLIC)
-  PHP_ME(Duration, __toString, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Duration, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_FE_END
 };
 
@@ -228,26 +231,25 @@ static php_driver_value_handlers php_driver_duration_handlers;
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_duration_properties(zend_object *object)
-#else
-#if PHP_VERSION_ID >= 80000
-static HashTable *
-php_driver_duration_properties(zend_object *object)
 {
-  zval obj_zval;
-  ZVAL_OBJ(&obj_zval, object);
-  // Function body will be updated below
+  HashTable *props = zend_std_get_properties(object);
+  php_driver_duration *self = php_driver_duration_object_fetch(object);
+
+  zval wrapped_months, wrapped_days, wrapped_nanos;
+  ZVAL_LONG(&wrapped_months, self->months);
+  ZVAL_LONG(&wrapped_days, self->days);
+  ZVAL_LONG(&wrapped_nanos, self->nanos);
+  zend_hash_str_update(props, "months", sizeof("months") - 1, &wrapped_months);
+  zend_hash_str_update(props, "days", sizeof("days") - 1, &wrapped_days);
+  zend_hash_str_update(props, "nanos", sizeof("nanos") - 1, &wrapped_nanos);
+
+  return props;
+}
 #else
 static HashTable *
 php_driver_duration_properties(zval *object TSRMLS_DC)
 {
-#endif
-#endif
-{
-  #if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
-  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
+  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
   php_driver_duration  *self = PHP_DRIVER_GET_DURATION(object);
 
   php5to7_zval wrapped_months, wrapped_days, wrapped_nanos;
@@ -263,6 +265,7 @@ php_driver_duration_properties(zval *object TSRMLS_DC)
 
   return props;
 }
+#endif
 
 #if PHP_VERSION_ID < 80000
 static int

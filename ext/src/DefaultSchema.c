@@ -144,7 +144,11 @@ php_driver_default_schema_free(php5to7_zend_object_free *object TSRMLS_DC)
     self->schema = NULL;
   }
 
+#if PHP_MAJOR_VERSION >= 7
+  zend_object_std_dtor((zend_object*)object TSRMLS_CC);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 
@@ -170,6 +174,7 @@ void php_driver_define_DefaultSchema(TSRMLS_D)
   php_driver_default_schema_ce->create_object = php_driver_default_schema_new;
 
   memcpy(&php_driver_default_schema_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+  php_driver_default_schema_handlers.free_obj = php_driver_default_schema_free;
   php_driver_default_schema_handlers.get_properties = php_driver_default_schema_properties;
   /* compare_objects was removed in PHP 8 */
 #if PHP_VERSION_ID < 80000

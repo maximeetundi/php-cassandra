@@ -139,6 +139,31 @@ php_driver_map_has(php_driver_map *map, zval *zkey TSRMLS_DC)
   return result;
 }
 
+#if PHP_VERSION_ID >= 80000
+static void
+php_driver_map_populate_keys(const php_driver_map *map, zval *array)
+{
+  php_driver_map_entry *curr,  *temp;
+  HASH_ITER(hh, map->entries, curr, temp) {
+    if (add_next_index_zval(array, &curr->key) != SUCCESS) {
+      break;
+    }
+    Z_TRY_ADDREF(curr->key);
+  }
+}
+
+static void
+php_driver_map_populate_values(const php_driver_map *map, zval *array)
+{
+  php_driver_map_entry *curr, *temp;
+  HASH_ITER(hh, map->entries, curr, temp) {
+    if (add_next_index_zval(array, &curr->value) != SUCCESS) {
+      break;
+    }
+    Z_TRY_ADDREF(curr->value);
+  }
+}
+#else
 static void
 php_driver_map_populate_keys(const php_driver_map *map, zval *array TSRMLS_DC)
 {
@@ -162,6 +187,7 @@ php_driver_map_populate_values(const php_driver_map *map, zval *array TSRMLS_DC)
     Z_TRY_ADDREF_P(PHP5TO7_ZVAL_MAYBE_P(curr->value));
   }
 }
+#endif
 
 /* {{{ Map::__construct(type, type) */
 PHP_METHOD(Map, __construct)
@@ -311,12 +337,20 @@ PHP_METHOD(Map, has)
   RETURN_FALSE;
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_count, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+#endif
 PHP_METHOD(Map, count)
 {
   php_driver_map *self = PHP_DRIVER_GET_MAP(getThis());
   RETURN_LONG((long)HASH_COUNT(self->entries));
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_current, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+#endif
 PHP_METHOD(Map, current)
 {
   php_driver_map *self = PHP_DRIVER_GET_MAP(getThis());
@@ -324,6 +358,10 @@ PHP_METHOD(Map, current)
     RETURN_ZVAL(PHP5TO7_ZVAL_MAYBE_P(self->iter_curr->value), 1, 0);
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_key, 0, 0, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+#endif
 PHP_METHOD(Map, key)
 {
   php_driver_map *self = PHP_DRIVER_GET_MAP(getThis());
@@ -331,6 +369,10 @@ PHP_METHOD(Map, key)
     RETURN_ZVAL(PHP5TO7_ZVAL_MAYBE_P(self->iter_curr->key), 1, 0);
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_next, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+#endif
 PHP_METHOD(Map, next)
 {
   php_driver_map *self = PHP_DRIVER_GET_MAP(getThis());
@@ -338,12 +380,20 @@ PHP_METHOD(Map, next)
   self->iter_temp = self->iter_temp != NULL ? (php_driver_map_entry *)self->iter_temp->hh.next : NULL;
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_valid, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+#endif
 PHP_METHOD(Map, valid)
 {
   php_driver_map *self = PHP_DRIVER_GET_MAP(getThis());
   RETURN_BOOL(self->iter_curr != NULL);
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_rewind, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+#endif
 PHP_METHOD(Map, rewind)
 {
   php_driver_map *self = PHP_DRIVER_GET_MAP(getThis());
@@ -351,6 +401,12 @@ PHP_METHOD(Map, rewind)
   self->iter_temp = self->entries != NULL ? (php_driver_map_entry *)self->entries->hh.next : NULL;
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_offsetSet, 0, 2, IS_VOID, 0)
+  ZEND_ARG_INFO(0, key)
+  ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+#endif
 PHP_METHOD(Map, offsetSet)
 {
   zval *key;
@@ -365,6 +421,11 @@ PHP_METHOD(Map, offsetSet)
   php_driver_map_set(self, key, value TSRMLS_CC);
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_offsetGet, 0, 1, IS_MIXED, 0)
+  ZEND_ARG_INFO(0, key)
+ZEND_END_ARG_INFO()
+#endif
 PHP_METHOD(Map, offsetGet)
 {
   zval *key;
@@ -380,6 +441,11 @@ PHP_METHOD(Map, offsetGet)
     RETURN_ZVAL(PHP5TO7_ZVAL_MAYBE_P(value), 1, 0);
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_offsetUnset, 0, 1, IS_VOID, 0)
+  ZEND_ARG_INFO(0, key)
+ZEND_END_ARG_INFO()
+#endif
 PHP_METHOD(Map, offsetUnset)
 {
   zval *key;
@@ -393,6 +459,11 @@ PHP_METHOD(Map, offsetUnset)
   php_driver_map_del(self, key TSRMLS_CC);
 }
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_offsetExists, 0, 1, _IS_BOOL, 0)
+  ZEND_ARG_INFO(0, key)
+ZEND_END_ARG_INFO()
+#endif
 PHP_METHOD(Map, offsetExists)
 {
   zval *key;
@@ -436,22 +507,62 @@ static zend_function_entry php_driver_map_methods[] = {
   PHP_ME(Map, remove, arginfo_one, ZEND_ACC_PUBLIC)
   PHP_ME(Map, has, arginfo_one, ZEND_ACC_PUBLIC)
   /* Countable */
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Map, count, arginfo_count, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Map, count, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
   /* Iterator */
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Map, current, arginfo_current, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Map, current, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Map, key, arginfo_key, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Map, key, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Map, next, arginfo_next, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Map, next, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Map, valid, arginfo_valid, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Map, valid, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Map, rewind, arginfo_rewind, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Map, rewind, arginfo_none, ZEND_ACC_PUBLIC)
+#endif
   /* ArrayAccess */
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Map, offsetSet, arginfo_offsetSet, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Map, offsetSet, arginfo_two, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Map, offsetGet, arginfo_offsetGet, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Map, offsetGet, arginfo_one, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Map, offsetUnset, arginfo_offsetUnset, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Map, offsetUnset, arginfo_one, ZEND_ACC_PUBLIC)
+#endif
+#if PHP_VERSION_ID >= 80100
+  PHP_ME(Map, offsetExists, arginfo_offsetExists, ZEND_ACC_PUBLIC)
+#else
   PHP_ME(Map, offsetExists, arginfo_one, ZEND_ACC_PUBLIC)
+#endif
   PHP_FE_END
 };
 
-static php_driver_value_handlers php_driver_map_handlers;
+static zend_object_handlers php_driver_map_handlers;
 
 static HashTable *
 php_driver_map_gc(zend_object *object, zval **table, int *n)
@@ -459,43 +570,54 @@ php_driver_map_gc(zend_object *object, zval **table, int *n)
   *table = NULL;
   *n = 0;
   #if PHP_VERSION_ID >= 80000
-  #if PHP_VERSION_ID >= 80000
   return zend_std_get_properties(object);
-#else
-  return zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
 #else
   return zend_std_get_properties(object TSRMLS_CC);
 #endif
 }
 
 #if PHP_VERSION_ID >= 80000
-static HashTable *
-php_driver_map_properties(zend_object *object)
-#else
-#if PHP_VERSION_ID >= 80000
+static int
+php_driver_bucket_data_compare(Bucket *a, Bucket *b)
+{
+  return php_driver_data_compare(&a->val, &b->val);
+}
+
 static HashTable *
 php_driver_map_properties(zend_object *object)
 {
-  zval obj_zval;
-  ZVAL_OBJ(&obj_zval, object);
-  // Function body will be updated below
+  zval keys;
+  zval values;
+
+  php_driver_map *self = php_driver_map_object_fetch(object);
+  HashTable *props = zend_std_get_properties(object);
+
+  zend_hash_update(props,
+                   zend_string_init("type", sizeof("type") - 1, 0),
+                   &self->type);
+  Z_ADDREF(self->type);
+
+  array_init(&keys);
+  php_driver_map_populate_keys(self, &keys);
+  zend_hash_sort(Z_ARRVAL(keys), (compare_func_t)php_driver_bucket_data_compare, 1);
+  zend_hash_str_update(props, "keys", sizeof("keys") - 1, &keys);
+
+  array_init(&values);
+  php_driver_map_populate_values(self, &values);
+  zend_hash_sort(Z_ARRVAL(values), (compare_func_t)php_driver_bucket_data_compare, 1);
+  zend_hash_str_update(props, "values", sizeof("values") - 1, &values);
+
+  return props;
+}
 #else
 static HashTable *
 php_driver_map_properties(zval *object TSRMLS_DC)
-{
-#endif
-#endif
 {
   php5to7_zval keys;
   php5to7_zval values;
 
   php_driver_map *self = PHP_DRIVER_GET_MAP(object);
-  #if PHP_VERSION_ID >= 80000
-  HashTable *props = zend_std_get_properties(object);
-#else
-  HashTable *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
-#endif
+  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
 
 
   PHP5TO7_ZEND_HASH_UPDATE(props,
@@ -517,10 +639,15 @@ php_driver_map_properties(zval *object TSRMLS_DC)
 
   return props;
 }
+#endif
 
 #if PHP_VERSION_ID < 80000
 static int
 php_driver_map_compare(zval *obj1, zval *obj2 TSRMLS_DC)
+#else
+int
+php_driver_map_compare(zval *obj1, zval *obj2)
+#endif
 {
   php_driver_map_entry *curr, *temp;
   php_driver_map *map1;
@@ -597,13 +724,10 @@ php_driver_map_free(php5to7_zend_object_free *object TSRMLS_DC)
 
   PHP5TO7_ZVAL_MAYBE_DESTROY(self->type);
 
-  #if PHP_VERSION_ID >= 80000
-  zend_object_std_dtor(&self->std);
-#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
-#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
+#endif
 
 static php5to7_zend_object
 php_driver_map_new(zend_class_entry *ce TSRMLS_DC)
@@ -618,7 +742,7 @@ php_driver_map_new(zend_class_entry *ce TSRMLS_DC)
   #if PHP_VERSION_ID >= 80000
   zend_object_std_init(&self->std, ce);
   object_properties_init(&self->std, ce);
-  self->std.handlers = &php_driver_map_handlers.std;
+  self->std.handlers = &php_driver_map_handlers;
   return &self->std;
 #else
   zend_object_std_init(&self->zval, ce);
@@ -632,21 +756,27 @@ void php_driver_define_Map(TSRMLS_D)
 {
   zend_class_entry ce;
 
-  INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\Map", php_driver_map_methods);
+  INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\Map", php_driver_map_methods);
   php_driver_map_ce = zend_register_internal_class(&ce TSRMLS_CC);
   zend_class_implements(php_driver_map_ce TSRMLS_CC, 1, php_driver_value_ce);
   memcpy(&php_driver_map_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  php_driver_map_handlers.std.get_properties  = php_driver_map_properties;
+  php_driver_map_handlers.get_properties  = php_driver_map_properties;
 #if PHP_VERSION_ID >= 50400
-  php_driver_map_handlers.std.get_gc          = php_driver_map_gc;
+  php_driver_map_handlers.get_gc          = php_driver_map_gc;
 #endif
 #if PHP_VERSION_ID < 80000
-  php_driver_map_handlers.std.compare_objects = php_driver_map_compare;
+  php_driver_map_handlers.compare_objects = php_driver_map_compare;
 #endif
   php_driver_map_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_map_ce->create_object = php_driver_map_new;
+  #if PHP_VERSION_ID >= 80000
+  zend_class_implements(php_driver_map_ce, 3, zend_ce_countable, zend_ce_iterator, zend_ce_arrayaccess);
+#else
   zend_class_implements(php_driver_map_ce TSRMLS_CC, 3, spl_ce_Countable, zend_ce_iterator, zend_ce_arrayaccess);
+#endif
 
+#if PHP_VERSION_ID >= 80000
   php_driver_map_handlers.hash_value = php_driver_map_hash_value;
-  php_driver_map_handlers.std.clone_obj = NULL;
+#endif
+  php_driver_map_handlers.clone_obj = NULL;
 }

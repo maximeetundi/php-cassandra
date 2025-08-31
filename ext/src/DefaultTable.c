@@ -383,7 +383,7 @@ PHP_METHOD(DefaultTable, column)
   self = PHP_DRIVER_GET_TABLE(getThis());
   meta = cass_table_meta_column_by_name(self->meta, name);
   if (meta == NULL) {
-    RETURN_FALSE
+    RETURN_FALSE;
   }
 
   column = php_driver_create_column(self->schema, meta TSRMLS_CC);
@@ -705,9 +705,11 @@ static HashTable *
 php_driver_default_table_properties(zval *object TSRMLS_DC)
 #endif
 {
-  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
-
-  return props;
+#if PHP_VERSION_ID >= 80000
+  return zend_std_get_properties(object);
+#else
+  return zend_std_get_properties(object TSRMLS_CC);
+#endif
 }
 
 static int
@@ -737,7 +739,11 @@ php_driver_default_table_free(php5to7_zend_object_free *object TSRMLS_DC)
   }
   self->meta = NULL;
 
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 

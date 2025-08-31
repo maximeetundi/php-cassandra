@@ -1,0 +1,92 @@
+Deprecated: Return type of Cassandra\Map::count() should either be compatible with Countable::count(): int, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Map::current() should either be compatible with Iterator::current(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Map::next() should either be compatible with Iterator::next(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Map::key() should either be compatible with Iterator::key(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Map::valid() should either be compatible with Iterator::valid(): bool, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Map::rewind() should either be compatible with Iterator::rewind(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Map::offsetExists($key) should either be compatible with ArrayAccess::offsetExists(mixed $offset): bool, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Map::offsetGet($key) should either be compatible with ArrayAccess::offsetGet(mixed $offset): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Map::offsetSet($key, $value) should either be compatible with ArrayAccess::offsetSet(mixed $offset, mixed $value): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Map::offsetUnset($key) should either be compatible with ArrayAccess::offsetUnset(mixed $offset): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Collection::count() should either be compatible with Countable::count(): int, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Collection::current() should either be compatible with Iterator::current(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Collection::next() should either be compatible with Iterator::next(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Collection::key() should either be compatible with Iterator::key(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Collection::valid() should either be compatible with Iterator::valid(): bool, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Collection::rewind() should either be compatible with Iterator::rewind(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Tuple::count() should either be compatible with Countable::count(): int, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Tuple::current() should either be compatible with Iterator::current(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Tuple::next() should either be compatible with Iterator::next(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Tuple::key() should either be compatible with Iterator::key(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Tuple::valid() should either be compatible with Iterator::valid(): bool, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Tuple::rewind() should either be compatible with Iterator::rewind(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\UserTypeValue::count() should either be compatible with Countable::count(): int, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\UserTypeValue::current() should either be compatible with Iterator::current(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\UserTypeValue::next() should either be compatible with Iterator::next(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\UserTypeValue::key() should either be compatible with Iterator::key(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\UserTypeValue::valid() should either be compatible with Iterator::valid(): bool, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\UserTypeValue::rewind() should either be compatible with Iterator::rewind(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Warning: Missing arginfo for Cassandra\PreparedStatement::__construct() in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Rows::current() should either be compatible with Iterator::current(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Rows::next() should either be compatible with Iterator::next(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Rows::key() should either be compatible with Iterator::key(): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Rows::valid() should either be compatible with Iterator::valid(): bool, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Rows::rewind() should either be compatible with Iterator::rewind(): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Rows::offsetExists($offset) should either be compatible with ArrayAccess::offsetExists(mixed $offset): bool, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Rows::offsetGet($offset) should either be compatible with ArrayAccess::offsetGet(mixed $offset): mixed, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Rows::offsetSet($offset, $value) should either be compatible with ArrayAccess::offsetSet(mixed $offset, mixed $value): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Deprecated: Return type of Cassandra\Rows::offsetUnset($offset) should either be compatible with ArrayAccess::offsetUnset(mixed $offset): void, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in Unknown on line 0
+
+Warning: Cassandra\Type::__toString() implemented without string return type in Unknown on line 0
+
+Warning: Cassandra\Type\Scalar::__toString() implemented without string return type in Unknown on line 0
+
+Warning: Cassandra\Type\Collection::__toString() implemented without string return type in Unknown on line 0
+
+Warning: Cassandra\Type\Set::__toString() implemented without string return type in Unknown on line 0
+
+Warning: Cassandra\Type\Map::__toString() implemented without string return type in Unknown on line 0
+
+Warning: Cassandra\Type\Tuple::__toString() implemented without string return type in Unknown on line 0
+
+Warning: Cassandra\Type\UserType::__toString() implemented without string return type in Unknown on line 0
+
+Warning: Cassandra\Type\Custom::__toString() implemented without string return type in Unknown on line 0
+success

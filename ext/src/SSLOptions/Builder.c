@@ -22,36 +22,26 @@
 zend_class_entry *php_driver_ssl_builder_ce = NULL;
 
 static int
-file_get_contents(char *path, char **output, int *len TSRMLS_DC)
+file_get_contents(char *path, char **output, size_t *len)
 {
-#if PHP_MAJOR_VERSION >= 7
-  zend_string *str;
   php_stream *stream = php_stream_open_wrapper(path, "rb",
                          USE_PATH|REPORT_ERRORS, NULL);
-#else
-  php_stream *stream = php_stream_open_wrapper(path, "rb",
-                         USE_PATH|REPORT_ERRORS|ENFORCE_SAFE_MODE, NULL);
-#endif
 
   if (!stream) {
-    zend_throw_exception_ex(php_driver_runtime_exception_ce, 0 TSRMLS_CC,
+    zend_throw_exception_ex(php_driver_runtime_exception_ce, 0,
       "The path '%s' doesn't exist or is not readable", path);
     return 0;
   }
 
-#if PHP_MAJOR_VERSION >= 7
-  str = php_stream_copy_to_mem(stream, PHP_STREAM_COPY_ALL, 0);
+  zend_string *str = php_stream_copy_to_mem(stream, PHP_STREAM_COPY_ALL, 0);
   if (str) {
-    *output = estrndup(str->val, str->len);
-    *len = str->len;
+    *output = estrndup(ZSTR_VAL(str), ZSTR_LEN(str));
+    *len = ZSTR_LEN(str);
     zend_string_release(str);
   } else {
     php_stream_close(stream);
     return 0;
   }
-#else
-  *len = php_stream_copy_to_mem(stream, output, PHP_STREAM_COPY_ALL, 0);
-#endif
 
   php_stream_close(stream);
   return 1;
@@ -60,7 +50,7 @@ file_get_contents(char *path, char **output, int *len TSRMLS_DC)
 PHP_METHOD(SSLOptionsBuilder, build)
 {
   php_driver_ssl *ssl = NULL;
-  int   len;
+  size_t len;
   char *contents;
   CassError rc;
 
@@ -78,7 +68,7 @@ PHP_METHOD(SSLOptionsBuilder, build)
     for (i = 0; i < builder->trusted_certs_cnt; i++) {
       path = builder->trusted_certs[i];
 
-      if (!file_get_contents(path, &contents, &len TSRMLS_CC))
+      if (!file_get_contents(path, &contents, &len))
         return;
 
       rc = cass_ssl_add_trusted_cert_n(ssl->ssl, contents, len);
@@ -88,7 +78,7 @@ PHP_METHOD(SSLOptionsBuilder, build)
   }
 
   if (builder->client_cert) {
-    if (!file_get_contents(builder->client_cert, &contents, &len TSRMLS_CC))
+    if (!file_get_contents(builder->client_cert, &contents, &len))
       return;
 
     rc = cass_ssl_set_cert_n(ssl->ssl, contents, len);
@@ -97,7 +87,7 @@ PHP_METHOD(SSLOptionsBuilder, build)
   }
 
   if (builder->private_key) {
-    if (!file_get_contents(builder->private_key, &contents, &len TSRMLS_CC))
+    if (!file_get_contents(builder->private_key, &contents, &len))
       return;
 
     rc = cass_ssl_set_private_key(ssl->ssl, contents, builder->passphrase);
@@ -108,29 +98,28 @@ PHP_METHOD(SSLOptionsBuilder, build)
 
 PHP_METHOD(SSLOptionsBuilder, withTrustedCerts)
 {
-  zval readable;
-  php5to7_zval_args args = NULL;
+  zval *args = NULL;
   int argc = 0, i;
   php_driver_ssl_builder *builder = NULL;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &args, &argc) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "+ ", &args, &argc) == FAILURE) {
     return;
   }
 
   for (i = 0; i < argc; i++) {
-    zval *path = PHP5TO7_ZVAL_ARG(args[i]);
+    zval *path = &args[i];
+    zval readable;
 
     if (Z_TYPE_P(path) != IS_STRING) {
-      throw_invalid_argument(path, "path", "a path to a trusted cert file" TSRMLS_CC);
-      PHP5TO7_MAYBE_EFREE(args);
+      throw_invalid_argument(path, "path", "a path to a trusted cert file");
+      return;
     }
 
-    php_stat(Z_STRVAL_P(path), Z_STRLEN_P(path), FS_IS_R, &readable TSRMLS_CC);
+    php_stat(Z_STR_P(path), FS_IS_R, &readable);
 
-    if (PHP5TO7_ZVAL_IS_FALSE_P(&readable)) {
-      zend_throw_exception_ex(php_driver_invalid_argument_exception_ce, 0 TSRMLS_CC,
+    if (Z_TYPE(readable) == IS_FALSE) {
+      zend_throw_exception_ex(php_driver_invalid_argument_exception_ce, 0,
         "The path '%s' doesn't exist or is not readable", Z_STRVAL_P(path));
-      PHP5TO7_MAYBE_EFREE(args);
       return;
     }
   }
@@ -149,21 +138,20 @@ PHP_METHOD(SSLOptionsBuilder, withTrustedCerts)
   builder->trusted_certs     = ecalloc(argc, sizeof(char *));
 
   for (i = 0; i < argc; i++) {
-    zval *path = PHP5TO7_ZVAL_ARG(args[i]);
+    zval *path = &args[i];
 
     builder->trusted_certs[i] = estrndup(Z_STRVAL_P(path), Z_STRLEN_P(path));
   }
 
-  PHP5TO7_MAYBE_EFREE(args);
   RETURN_ZVAL(getThis(), 1, 0);
 }
 
 PHP_METHOD(SSLOptionsBuilder, withVerifyFlags)
 {
-  long flags;
+  zend_long flags;
   php_driver_ssl_builder *builder = NULL;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &flags) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &flags) == FAILURE) {
     return;
   }
 
@@ -177,18 +165,18 @@ PHP_METHOD(SSLOptionsBuilder, withVerifyFlags)
 PHP_METHOD(SSLOptionsBuilder, withClientCert)
 {
   char *client_cert;
-  php5to7_size client_cert_len;
+  size_t client_cert_len;
   zval readable;
   php_driver_ssl_builder *builder = NULL;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &client_cert, &client_cert_len) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &client_cert, &client_cert_len) == FAILURE) {
     return;
   }
 
-  php_stat(client_cert, client_cert_len, FS_IS_R, &readable TSRMLS_CC);
+  php_stat(zend_string_init(client_cert, client_cert_len, 0), FS_IS_R, &readable);
 
-  if (PHP5TO7_ZVAL_IS_FALSE_P(&readable)) {
-    zend_throw_exception_ex(php_driver_invalid_argument_exception_ce, 0 TSRMLS_CC,
+  if (Z_TYPE(readable) == IS_FALSE) {
+    zend_throw_exception_ex(php_driver_invalid_argument_exception_ce, 0,
       "The path '%s' doesn't exist or is not readable", client_cert);
     return;
   }
@@ -207,18 +195,18 @@ PHP_METHOD(SSLOptionsBuilder, withPrivateKey)
 {
   char *private_key;
   char *passphrase = NULL;
-  php5to7_size private_key_len, passphrase_len;
+  size_t private_key_len, passphrase_len;
   zval readable;
   php_driver_ssl_builder *builder = NULL;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|s", &private_key, &private_key_len, &passphrase, &passphrase_len) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|s", &private_key, &private_key_len, &passphrase, &passphrase_len) == FAILURE) {
     return;
   }
 
-  php_stat(private_key, private_key_len, FS_IS_R, &readable TSRMLS_CC);
+  php_stat(zend_string_init(private_key, private_key_len, 0), FS_IS_R, &readable);
 
-  if (PHP5TO7_ZVAL_IS_FALSE_P(&readable)) {
-    zend_throw_exception_ex(php_driver_invalid_argument_exception_ce, 0 TSRMLS_CC,
+  if (Z_TYPE(readable) == IS_FALSE) {
+    zend_throw_exception_ex(php_driver_invalid_argument_exception_ce, 0,
       "The path '%s' doesn't exist or is not readable", private_key);
     return;
   }
@@ -275,18 +263,26 @@ static zend_object_handlers php_driver_ssl_builder_handlers;
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_ssl_builder_properties(zend_object *object)
-#else
-static HashTable *
-php_driver_ssl_builder_properties(zval *object TSRMLS_DC)
-#endif
 {
-  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
-
+  HashTable *props = zend_std_get_properties(object);
   return props;
 }
+#else
+static HashTable *
+php_driver_ssl_builder_properties(zval *object TSRMLS_CC)
+{
+  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+  return props;
+}
+#endif
 
+#if PHP_VERSION_ID < 80000
 static int
 php_driver_ssl_builder_compare(zval *obj1, zval *obj2 TSRMLS_DC)
+#else
+int
+php_driver_ssl_builder_compare(zval *obj1, zval *obj2)
+#endif
 {
   if (Z_OBJCE_P(obj1) != Z_OBJCE_P(obj2))
     return 1; /* different classes */
@@ -294,11 +290,36 @@ php_driver_ssl_builder_compare(zval *obj1, zval *obj2 TSRMLS_DC)
   return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj2);
 }
 
+#if PHP_VERSION_ID >= 80000
 static void
-php_driver_ssl_builder_free(php5to7_zend_object_free *object TSRMLS_DC)
+php_driver_ssl_builder_free(zend_object *object)
 {
-  php_driver_ssl_builder *self = PHP5TO7_ZEND_OBJECT_GET(ssl_builder, object);
+  php_driver_ssl_builder *self = (php_driver_ssl_builder *) ((char *) (object) - XtOffsetOf(php_driver_ssl_builder, std));
+  if (self->trusted_certs) {
+    int i;
 
+    for (i = 0; i < self->trusted_certs_cnt; i++)
+      efree(self->trusted_certs[i]);
+
+    efree(self->trusted_certs);
+  }
+
+  if (self->client_cert)
+    efree(self->client_cert);
+
+  if (self->private_key)
+    efree(self->private_key);
+
+  if (self->passphrase)
+    efree(self->passphrase);
+
+  zend_object_std_dtor(&self->std);
+}
+#else
+static void
+php_driver_ssl_builder_free(void *object TSRMLS_DC)
+{
+  php_driver_ssl_builder *self = (php_driver_ssl_builder *) object;
   if (self->trusted_certs) {
     int i;
 
@@ -318,14 +339,15 @@ php_driver_ssl_builder_free(php5to7_zend_object_free *object TSRMLS_DC)
     efree(self->passphrase);
 
   zend_object_std_dtor(&self->zval TSRMLS_CC);
-  PHP5TO7_MAYBE_EFREE(self);
+  efree(self);
 }
+#endif
 
-static php5to7_zend_object
-php_driver_ssl_builder_new(zend_class_entry *ce TSRMLS_DC)
+#if PHP_VERSION_ID >= 80000
+static zend_object*
+php_driver_ssl_builder_new(zend_class_entry *ce)
 {
-  php_driver_ssl_builder *self =
-      PHP5TO7_ZEND_OBJECT_ECALLOC(ssl_builder, ce);
+  php_driver_ssl_builder *self = ecalloc(1, sizeof(php_driver_ssl_builder) + zend_object_properties_size(ce));
 
   self->flags             = 0;
   self->trusted_certs     = NULL;
@@ -334,8 +356,39 @@ php_driver_ssl_builder_new(zend_class_entry *ce TSRMLS_DC)
   self->private_key       = NULL;
   self->passphrase        = NULL;
 
-  PHP5TO7_ZEND_OBJECT_INIT(ssl_builder, self, ce);
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_ssl_builder_handlers;
+
+  return &self->std;
 }
+#else
+static zend_object_value
+php_driver_ssl_builder_new(zend_class_entry *ce TSRMLS_DC)
+{
+  zend_object_value retval;
+  php_driver_ssl_builder *self;
+
+  self = (php_driver_ssl_builder *) ecalloc(1, sizeof(php_driver_ssl_builder));
+
+  self->flags             = 0;
+  self->trusted_certs     = NULL;
+  self->trusted_certs_cnt = 0;
+  self->client_cert       = NULL;
+  self->private_key       = NULL;
+  self->passphrase        = NULL;
+
+  zend_object_std_init(&self->zval, ce TSRMLS_CC);
+  object_properties_init(&self->zval, ce TSRMLS_CC);
+
+  retval.handle = zend_objects_store_put(self,
+                                         (zend_objects_store_dtor_t) zend_objects_destroy_object,
+                                         php_driver_ssl_builder_free, NULL TSRMLS_CC);
+  retval.handlers = &php_driver_ssl_builder_handlers;
+
+  return retval;
+}
+#endif
 
 void php_driver_define_SSLOptionsBuilder(TSRMLS_D)
 {
@@ -343,13 +396,20 @@ void php_driver_define_SSLOptionsBuilder(TSRMLS_D)
 
   INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\SSLOptions\\Builder", php_driver_ssl_builder_methods);
   php_driver_ssl_builder_ce = zend_register_internal_class(&ce TSRMLS_CC);
-  php_driver_ssl_builder_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;
+  php_driver_ssl_builder_ce->ce_flags     |= ZEND_ACC_FINAL;
   php_driver_ssl_builder_ce->create_object = php_driver_ssl_builder_new;
 
   memcpy(&php_driver_ssl_builder_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+
+#if PHP_VERSION_ID >= 80000
+  php_driver_ssl_builder_handlers.offset = XtOffsetOf(php_driver_ssl_builder, std);
+  php_driver_ssl_builder_handlers.free_obj = php_driver_ssl_builder_free;
   php_driver_ssl_builder_handlers.get_properties = php_driver_ssl_builder_properties;
-  /* compare_objects was removed in PHP 8 */
-#if PHP_VERSION_ID < 80000
+  php_driver_ssl_builder_handlers.compare = php_driver_ssl_builder_compare;
+  php_driver_ssl_builder_handlers.clone_obj = NULL;
+#else
+  php_driver_ssl_builder_handlers.get_properties = php_driver_ssl_builder_properties;
   php_driver_ssl_builder_handlers.compare_objects = php_driver_ssl_builder_compare;
+  php_driver_ssl_builder_handlers.clone_obj = NULL;
 #endif
 }

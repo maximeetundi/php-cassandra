@@ -102,7 +102,7 @@ php_driver_bigint_init(INTERNAL_FUNCTION_PARAMETERS)
     self->data.bigint.value = bigint->data.bigint.value;
   } else {
     INVALID_ARGUMENT(value, "a long, a double, a numeric string or a " \
-                            PHP_DRIVER_NAMESPACE "\\Bigint");
+                            PHP_DRIVER_NAMESPACE "\Bigint");
   }
 }
 
@@ -112,6 +112,9 @@ PHP_METHOD(Bigint, __construct)
   php_driver_bigint_init(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tostring, 0, 0, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 
 /* {{{ Bigint::__toString() */
 PHP_METHOD(Bigint, __toString)
@@ -161,7 +164,7 @@ PHP_METHOD(Bigint, add)
 
     result->data.bigint.value = self->data.bigint.value + bigint->data.bigint.value;
   } else {
-    INVALID_ARGUMENT(num, "a " PHP_DRIVER_NAMESPACE "\\Bigint");
+    INVALID_ARGUMENT(num, "a " PHP_DRIVER_NAMESPACE "\Bigint");
   }
 }
 /* }}} */
@@ -186,7 +189,7 @@ PHP_METHOD(Bigint, sub)
 
     result->data.bigint.value = self->data.bigint.value - bigint->data.bigint.value;
   } else {
-    INVALID_ARGUMENT(num, "a " PHP_DRIVER_NAMESPACE "\\Bigint");
+    INVALID_ARGUMENT(num, "a " PHP_DRIVER_NAMESPACE "\Bigint");
   }
 }
 /* }}} */
@@ -211,7 +214,7 @@ PHP_METHOD(Bigint, mul)
 
     result->data.bigint.value = self->data.bigint.value * bigint->data.bigint.value;
   } else {
-    INVALID_ARGUMENT(num, "a " PHP_DRIVER_NAMESPACE "\\Bigint");
+    INVALID_ARGUMENT(num, "a " PHP_DRIVER_NAMESPACE "\Bigint");
   }
 }
 /* }}} */
@@ -241,7 +244,7 @@ PHP_METHOD(Bigint, div)
 
     result->data.bigint.value = self->data.bigint.value / bigint->data.bigint.value;
   } else {
-    INVALID_ARGUMENT(num, "a " PHP_DRIVER_NAMESPACE "\\Bigint");
+    INVALID_ARGUMENT(num, "a " PHP_DRIVER_NAMESPACE "\Bigint");
   }
 }
 /* }}} */
@@ -271,7 +274,7 @@ PHP_METHOD(Bigint, mod)
 
     result->data.bigint.value = self->data.bigint.value % bigint->data.bigint.value;
   } else {
-    INVALID_ARGUMENT(num, "a " PHP_DRIVER_NAMESPACE "\\Bigint");
+    INVALID_ARGUMENT(num, "a " PHP_DRIVER_NAMESPACE "\Bigint");
   }
 }
 /* }}} */
@@ -373,7 +376,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry php_driver_bigint_methods[] = {
   PHP_ME(Bigint, __construct, arginfo__construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-  PHP_ME(Bigint, __toString, arginfo_none, ZEND_ACC_PUBLIC)
+  PHP_ME(Bigint, __toString, arginfo_tostring, ZEND_ACC_PUBLIC)
   PHP_ME(Bigint, type, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Bigint, value, arginfo_none, ZEND_ACC_PUBLIC)
   PHP_ME(Bigint, add, arginfo_num, ZEND_ACC_PUBLIC)
@@ -494,7 +497,7 @@ void php_driver_define_Bigint(void)
 {
   zend_class_entry ce;
 
-  INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\\Bigint", php_driver_bigint_methods);
+  INIT_CLASS_ENTRY(ce, PHP_DRIVER_NAMESPACE "\Bigint", php_driver_bigint_methods);
   php_driver_bigint_ce = zend_register_internal_class(&ce);
   zend_class_implements(php_driver_bigint_ce, 2, php_driver_value_ce, php_driver_numeric_ce);
   php_driver_bigint_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;
