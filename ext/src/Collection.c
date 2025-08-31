@@ -326,15 +326,22 @@ php_driver_collection_gc(zend_object *object, zval **table, int *n)
 #if PHP_VERSION_ID >= 80000
 static HashTable *
 php_driver_collection_properties(zend_object *object)
+{
+  php5to7_zval values;
+  zval obj_zval;
+  ZVAL_OBJ(&obj_zval, object);
+
+  php_driver_collection  *self = PHP_DRIVER_GET_COLLECTION(&obj_zval);
+  HashTable             *props = zend_std_get_properties(object);
 #else
 static HashTable *
 php_driver_collection_properties(zval *object TSRMLS_DC)
-#endif
 {
   php5to7_zval values;
 
   php_driver_collection  *self = PHP_DRIVER_GET_COLLECTION(object);
-  HashTable             *props = zend_std_get_properties(object TSRMLS_CC);
+  HashTable             *props = zend_std_get_properties(Z_OBJ_P(object) TSRMLS_CC);
+#endif
 
   PHP5TO7_ZEND_HASH_UPDATE(props,
                            "type", sizeof("type"),
@@ -349,6 +356,7 @@ php_driver_collection_properties(zval *object TSRMLS_DC)
   return props;
 }
 
+#if PHP_VERSION_ID < 80000
 static int
 php_driver_collection_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 {
@@ -392,6 +400,7 @@ php_driver_collection_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 
   return 0;
 }
+#endif
 
 static unsigned
 php_driver_collection_hash_value(zval *obj TSRMLS_DC)
@@ -422,7 +431,11 @@ php_driver_collection_free(php5to7_zend_object_free *object TSRMLS_DC)
   zend_hash_destroy(&self->values);
   PHP5TO7_ZVAL_MAYBE_DESTROY(self->type);
 
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 
@@ -433,10 +446,18 @@ php_driver_collection_new(zend_class_entry *ce TSRMLS_DC)
       PHP5TO7_ZEND_OBJECT_ECALLOC(collection, ce);
 
   zend_hash_init(&self->values, 0, NULL, ZVAL_PTR_DTOR, 0);
-  self->dirty = 1;
-  PHP5TO7_ZVAL_UNDEF(self->type);
 
-  PHP5TO7_ZEND_OBJECT_INIT(collection, self, ce);
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_init(&self->std, ce);
+  object_properties_init(&self->std, ce);
+  self->std.handlers = &php_driver_collection_handlers.std;
+  return &self->std;
+#else
+  zend_object_std_init(&self->zval, ce);
+  object_properties_init(&self->zval, ce);
+  self->zval.handlers = &php_driver_collection_handlers;
+  return &self->zval;
+#endif
 }
 
 void php_driver_define_Collection(TSRMLS_D)
@@ -456,7 +477,7 @@ void php_driver_define_Collection(TSRMLS_D)
 #endif
   php_driver_collection_ce->ce_flags |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_collection_ce->create_object = php_driver_collection_new;
-  zend_class_implements(php_driver_collection_ce TSRMLS_CC, 2, spl_ce_Countable, zend_ce_iterator);
+  zend_class_implements(php_driver_collection_ce TSRMLS_CC, 2, zend_ce_countable, zend_ce_iterator);
 
   php_driver_collection_handlers.hash_value = php_driver_collection_hash_value;
   php_driver_collection_handlers.std.clone_obj = NULL;
