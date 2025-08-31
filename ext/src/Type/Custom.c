@@ -70,9 +70,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_string, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_void_param, 0, 0, IS_VOID, 0)
-ZEND_END_ARG_INFO()
-
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_value, 0, 0, PHP_DRIVER_NAMESPACE "\\Custom", 0)
   ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
@@ -204,8 +201,10 @@ void php_driver_define_TypeCustom(TSRMLS_D)
 #endif
   #if PHP_VERSION_ID >= 80000
   php_driver_type_custom_handlers.compare = php_driver_type_custom_compare;
+  php_driver_type_custom_handlers.free_obj = php_driver_type_custom_free;
 #else
   php_driver_type_custom_handlers.compare_objects = php_driver_type_custom_compare;
+  php_driver_type_custom_handlers.free_obj = php_driver_type_custom_free;
 #endif
   php_driver_type_custom_ce->ce_flags     |= PHP5TO7_ZEND_ACC_FINAL;
   php_driver_type_custom_ce->create_object = php_driver_type_custom_new;
