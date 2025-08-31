@@ -233,7 +233,12 @@ static HashTable *
 php_driver_default_aggregate_properties(zval *object TSRMLS_DC)
 #endif
 {
-  HashTable *props = zend_std_get_properties(object TSRMLS_CC);
+  HashTable *props =
+#if PHP_VERSION_ID >= 80000
+    zend_std_get_properties(object);
+#else
+    zend_std_get_properties(object TSRMLS_CC);
+#endif
 
   return props;
 }
@@ -267,7 +272,11 @@ php_driver_default_aggregate_free(php5to7_zend_object_free *object TSRMLS_DC)
   }
   self->meta = NULL;
 
+#if PHP_VERSION_ID >= 80000
+  zend_object_std_dtor(&self->std);
+#else
   zend_object_std_dtor(&self->zval TSRMLS_CC);
+#endif
   PHP5TO7_MAYBE_EFREE(self);
 }
 
@@ -307,6 +316,8 @@ void php_driver_define_DefaultAggregate(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_default_aggregate_handlers.get_gc = php_driver_type_default_aggregate_gc;
 #endif
+#if PHP_VERSION_ID < 80000
   php_driver_default_aggregate_handlers.compare_objects = php_driver_default_aggregate_compare;
+#endif
   php_driver_default_aggregate_handlers.clone_obj = NULL;
 }

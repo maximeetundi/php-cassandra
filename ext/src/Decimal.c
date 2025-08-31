@@ -112,12 +112,8 @@ from_double(php_driver_numeric *result, double value)
     mantissa >>= 1;
   }
 
-  /* There isn't any "long long" setter method  */
-#ifdef _WIN32
-  sprintf(mantissa_str, "%I64d", mantissa);
-#else
-  sprintf(mantissa_str, "%lld", mantissa);
-#endif
+  /* Use portable 64-bit printf format */
+  sprintf(mantissa_str, LL_FORMAT, (long long)mantissa);
   mpz_set_str(result->data.decimal.value, mantissa_str, 10);
 
   /* Change the sign if negative */
@@ -601,6 +597,28 @@ php_driver_decimal_hash_value(zval *obj TSRMLS_DC)
   return php_driver_mpz_hash((unsigned)self->data.decimal.scale, self->data.decimal.value);
 }
 
+#if PHP_VERSION_ID >= 80000
+static int
+php_driver_decimal_cast_object(zend_object *object, zval *retval, int type)
+{
+  zval obj_zv;
+  ZVAL_OBJ(&obj_zv, object);
+  php_driver_numeric *self = PHP_DRIVER_GET_NUMERIC(&obj_zv);
+
+  switch (type) {
+  case IS_LONG:
+      return to_long(retval, self TSRMLS_CC);
+  case IS_DOUBLE:
+      return to_double(retval, self TSRMLS_CC);
+  case IS_STRING:
+      return to_string(retval, self TSRMLS_CC);
+  default:
+     return FAILURE;
+  }
+
+  return SUCCESS;
+}
+#else
 static int
 php_driver_decimal_cast(zval *object, zval *retval, int type TSRMLS_DC)
 {
@@ -619,8 +637,16 @@ php_driver_decimal_cast(zval *object, zval *retval, int type TSRMLS_DC)
 
   return SUCCESS;
 }
+#endif
 
-#if PHP_VERSION_ID < 80000
+#if PHP_VERSION_ID >= 80000
+static void php_driver_decimal_free_obj(zend_object *object)
+{
+  php_driver_numeric *self = php_driver_numeric_object_fetch(object);
+  mpz_clear(self->data.decimal.value);
+  zend_object_std_dtor(object);
+}
+#else
 static void
 php_driver_decimal_free(php5to7_zend_object_free *object TSRMLS_DC)
 {
@@ -673,7 +699,13 @@ void php_driver_define_Decimal(TSRMLS_D)
 #if PHP_VERSION_ID < 80000
   php_driver_decimal_handlers.std.compare_objects = php_driver_decimal_compare;
 #endif
+  /* Assign cast and free handlers based on PHP version */
+#if PHP_VERSION_ID >= 80000
+  php_driver_decimal_handlers.std.cast_object     = php_driver_decimal_cast_object;
+  php_driver_decimal_handlers.std.free_obj        = php_driver_decimal_free_obj;
+#else
   php_driver_decimal_handlers.std.cast_object     = php_driver_decimal_cast;
+#endif
 
   php_driver_decimal_handlers.hash_value = php_driver_decimal_hash_value;
   php_driver_decimal_handlers.std.clone_obj = NULL;
