@@ -175,6 +175,7 @@ php_driver_blob_properties(zval *object TSRMLS_DC)
 }
 #endif
 
+#if PHP_VERSION_ID < 80000
 static int
 php_driver_blob_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 {
@@ -195,6 +196,7 @@ php_driver_blob_compare(zval *obj1, zval *obj2 TSRMLS_DC)
     return 1;
   }
 }
+#endif
 
 static unsigned
 php_driver_blob_hash_value(zval *obj TSRMLS_DC)
@@ -229,7 +231,7 @@ php_driver_blob_new(zend_class_entry *ce TSRMLS_DC)
 #if PHP_VERSION_ID >= 80000
   zend_object_std_init(&self->std, ce);
   object_properties_init(&self->std, ce);
-  self->std.handlers = &php_driver_blob_handlers;
+  self->std.handlers = &php_driver_blob_handlers.std;
   return &self->std;
 #else
   zend_object_std_init(&self->zval, ce);

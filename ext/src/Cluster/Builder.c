@@ -1337,6 +1337,7 @@ php_driver_cluster_builder_properties(zval *object TSRMLS_DC)
   return props;
 }
 
+#if PHP_VERSION_ID < 80000
 static int
 php_driver_cluster_builder_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 {
@@ -1345,6 +1346,7 @@ php_driver_cluster_builder_compare(zval *obj1, zval *obj2 TSRMLS_DC)
 
   return Z_OBJ_HANDLE_P(obj1) != Z_OBJ_HANDLE_P(obj1);
 }
+#endif
 
 static void
 php_driver_cluster_builder_free(php5to7_zend_object_free *object TSRMLS_DC)
@@ -1463,5 +1465,7 @@ void php_driver_define_ClusterBuilder(TSRMLS_D)
 #if PHP_VERSION_ID >= 50400
   php_driver_cluster_builder_handlers.get_gc = php_driver_cluster_builder_gc;
 #endif
+#if PHP_VERSION_ID < 80000
   php_driver_cluster_builder_handlers.compare_objects = php_driver_cluster_builder_compare;
+#endif
 }
