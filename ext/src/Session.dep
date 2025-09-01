@@ -1,4 +1,4 @@
-src/Session.lo: /home/agabadounir/php-cassandra/ext/src/Session.c \
+src/Session.lo: /home/lucasneontine/php-cassandra/ext/src/Session.c \
  php_driver.h config.h \
  /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \

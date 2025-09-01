@@ -1,4 +1,4 @@
-src/Aggregate.lo: /home/agabadounir/php-cassandra/ext/src/Aggregate.c \
+src/Aggregate.lo: /home/lucasneontine/php-cassandra/ext/src/Aggregate.c \
  php_driver.h config.h \
  /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \

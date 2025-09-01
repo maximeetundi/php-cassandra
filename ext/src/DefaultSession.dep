@@ -1,5 +1,5 @@
 src/DefaultSession.lo: \
- /home/agabadounir/php-cassandra/ext/src/DefaultSession.c php_driver.h \
+ /home/lucasneontine/php-cassandra/ext/src/DefaultSession.c php_driver.h \
  config.h /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \
  /usr/include/php/20230831/main/php_version.h \
@@ -96,4 +96,4 @@ src/DefaultSession.lo: \
  /usr/include/php/20230831/ext/spl/spl_exceptions.h version.h \
  php_driver_types.h util/bytes.h util/future.h util/result.h util/ref.h \
  util/math.h util/collections.h \
- /home/agabadounir/php-cassandra/ext/src/ExecutionOptions.h
+ /home/lucasneontine/php-cassandra/ext/src/ExecutionOptions.h

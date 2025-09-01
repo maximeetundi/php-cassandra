@@ -1,4 +1,4 @@
-src/Schema.lo: /home/agabadounir/php-cassandra/ext/src/Schema.c \
+src/Schema.lo: /home/lucasneontine/php-cassandra/ext/src/Schema.c \
  php_driver.h config.h \
  /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \

@@ -1,4 +1,4 @@
-util/result.lo: /home/agabadounir/php-cassandra/ext/util/result.c \
+util/result.lo: /home/lucasneontine/php-cassandra/ext/util/result.c \
  php_driver.h config.h \
  /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \
@@ -94,9 +94,9 @@ util/result.lo: /home/agabadounir/php-cassandra/ext/util/result.c \
  /usr/include/php/20230831/ext/spl/spl_iterators.h \
  /usr/include/php/20230831/ext/spl/php_spl.h \
  /usr/include/php/20230831/ext/spl/spl_exceptions.h version.h \
- php_driver_types.h /home/agabadounir/php-cassandra/ext/util/result.h \
- /home/agabadounir/php-cassandra/ext/util/math.h \
- /home/agabadounir/php-cassandra/ext/util/collections.h \
- /home/agabadounir/php-cassandra/ext/util/types.h \
+ php_driver_types.h /home/lucasneontine/php-cassandra/ext/util/result.h \
+ /home/lucasneontine/php-cassandra/ext/util/math.h \
+ /home/lucasneontine/php-cassandra/ext/util/collections.h \
+ /home/lucasneontine/php-cassandra/ext/util/types.h \
  /usr/include/php/20230831/Zend/zend_smart_str.h src/Collection.h \
  src/Map.h src/Set.h src/Tuple.h src/UserTypeValue.h

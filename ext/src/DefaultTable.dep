@@ -1,5 +1,5 @@
 src/DefaultTable.lo: \
- /home/agabadounir/php-cassandra/ext/src/DefaultTable.c php_driver.h \
+ /home/lucasneontine/php-cassandra/ext/src/DefaultTable.c php_driver.h \
  config.h /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \
  /usr/include/php/20230831/main/php_version.h \
@@ -96,7 +96,7 @@ src/DefaultTable.lo: \
  /usr/include/php/20230831/ext/spl/spl_exceptions.h version.h \
  php_driver_types.h util/result.h util/ref.h util/types.h \
  /usr/include/php/20230831/Zend/zend_smart_str.h \
- /home/agabadounir/php-cassandra/ext/src/DefaultColumn.h \
- /home/agabadounir/php-cassandra/ext/src/DefaultMaterializedView.h \
- /home/agabadounir/php-cassandra/ext/src/DefaultIndex.h \
- /home/agabadounir/php-cassandra/ext/src/Table.h
+ /home/lucasneontine/php-cassandra/ext/src/DefaultColumn.h \
+ /home/lucasneontine/php-cassandra/ext/src/DefaultMaterializedView.h \
+ /home/lucasneontine/php-cassandra/ext/src/DefaultIndex.h \
+ /home/lucasneontine/php-cassandra/ext/src/Table.h

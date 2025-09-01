@@ -1,5 +1,6 @@
-src/Inet.lo: /home/agabadounir/php-cassandra/ext/src/Inet.c php_driver.h \
- config.h /tmp/php-driver-installation/build/include/cassandra.h \
+src/Inet.lo: /home/lucasneontine/php-cassandra/ext/src/Inet.c \
+ php_driver.h config.h \
+ /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \
  /usr/include/php/20230831/main/php_version.h \
  /usr/include/php/20230831/Zend/zend.h \

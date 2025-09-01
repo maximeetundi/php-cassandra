@@ -1,4 +1,4 @@
-util/uuid_gen.lo: /home/agabadounir/php-cassandra/ext/util/uuid_gen.c \
+util/uuid_gen.lo: /home/lucasneontine/php-cassandra/ext/util/uuid_gen.c \
  php_driver.h config.h \
  /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \

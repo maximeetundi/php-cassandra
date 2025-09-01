@@ -9,7 +9,7 @@ if (!extension_loaded('cassandra')) {
 printf("Extension cassandra chargée. Version: %s\n\n", phpversion('cassandra'));
 
 // 2) Paramètres de connexion (depuis cloudclustersio/cassandra/cassandra.txt)
-$host = 'cassandra-123456-0.cloudclusters.net';
+$host = 'cassandra-201683-0.cloudclusters.net';
 $port = 10014;
 
 // 3) Chemins des certificats/clé (PEM)
@@ -17,8 +17,8 @@ $certPath = __DIR__ . '/cloudclustersio/cassandra/user.cer.pem';
 $keyPath  = __DIR__ . '/cloudclustersio/cassandra/user.key.pem';
 
 // 3b) Identifiants (si requis) via variables d'environnement
-$username = getenv('CASSANDRA_USERNAME') ?: 'user';
-$password = getenv('CASSANDRA_PASSWORD') ?: 'password';
+$username = getenv('CASSANDRA_USERNAME') ?: 'admin';
+$password = getenv('CASSANDRA_PASSWORD') ?: 'aa5564@#';
 
 // Vérifications de base
 foreach ([$certPath, $keyPath] as $p) {
@@ -63,6 +63,26 @@ try {
         printf("Version de Cassandra: %s\n", (string) $row['release_version']);
     } else {
         echo "Aucune version retournée par system.local.\n";
+    }
+
+    // Test minimal: création d'un keyspace/table via CQL brut (évite SimpleStatement)
+    echo "\n[TEST DDL] Création d'un keyspace et d'une table de test...\n";
+    try {
+        $session->execute("CREATE KEYSPACE IF NOT EXISTS test_ks WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'} AND durable_writes = true");
+        $session->execute("CREATE TABLE IF NOT EXISTS test_ks.demo (id int PRIMARY KEY, v text)");
+        echo "Keyspace et table créés (ou déjà existants).\n";
+
+        // Insertion et lecture
+        $session->execute("INSERT INTO test_ks.demo (id, v) VALUES (1, 'ok')");
+        $rows = $session->execute("SELECT id, v FROM test_ks.demo WHERE id = 1");
+        $r = $rows->first();
+        if ($r) {
+            printf("Lecture: id=%d, v=%s\n", (int)$r['id'], (string)$r['v']);
+        } else {
+            echo "Aucune ligne lue dans test_ks.demo.\n";
+        }
+    } catch (Throwable $e) {
+        fwrite(STDERR, "[TEST DDL] Erreur: " . $e->getMessage() . "\n");
     }
 
 } catch (Throwable $e) {

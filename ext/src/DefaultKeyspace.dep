@@ -1,5 +1,5 @@
 src/DefaultKeyspace.lo: \
- /home/agabadounir/php-cassandra/ext/src/DefaultKeyspace.c php_driver.h \
+ /home/lucasneontine/php-cassandra/ext/src/DefaultKeyspace.c php_driver.h \
  config.h /tmp/php-driver-installation/build/include/cassandra.h \
  /usr/include/php/20230831/main/php.h \
  /usr/include/php/20230831/main/php_version.h \
@@ -96,6 +96,6 @@ src/DefaultKeyspace.lo: \
  /usr/include/php/20230831/ext/spl/spl_exceptions.h version.h \
  php_driver_types.h util/result.h util/ref.h util/types.h \
  /usr/include/php/20230831/Zend/zend_smart_str.h \
- /home/agabadounir/php-cassandra/ext/src/DefaultFunction.h \
- /home/agabadounir/php-cassandra/ext/src/DefaultMaterializedView.h \
- /home/agabadounir/php-cassandra/ext/src/DefaultTable.h
+ /home/lucasneontine/php-cassandra/ext/src/DefaultFunction.h \
+ /home/lucasneontine/php-cassandra/ext/src/DefaultMaterializedView.h \
+ /home/lucasneontine/php-cassandra/ext/src/DefaultTable.h

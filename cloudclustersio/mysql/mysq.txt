@@ -1,0 +1,6 @@
+Host: mysql-201684-0.cloudclusters.net 
+Port: 19984 
+IP Address: 69.30.235.141 
+Initial Super User: admin 
+Initial Password : WpqBcLu4
+CA Certificate: C:\Users\z\Music\engine-master_1\engine-master\cloudclustersio\mysql\ca.pem
