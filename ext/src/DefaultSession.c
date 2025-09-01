@@ -661,12 +661,18 @@ PHP_METHOD(DefaultSession, execute)
     php_driver_rows *rows = NULL;
 
     if (php_driver_future_wait_timed(future, timeout TSRMLS_CC) == FAILURE ||
-        php_driver_future_is_error(future TSRMLS_CC) == FAILURE)
+        php_driver_future_is_error(future TSRMLS_CC) == FAILURE) {
+      /* Ensure future is freed on error path to avoid resource leaks */
+      if (future) {
+        cass_future_free(future);
+        future = NULL;
+      }
       break;
+    }
 
     result = cass_future_get_result(future);
     cass_future_free(future);
-
+    
     if (!result) {
       zend_throw_exception_ex(php_driver_runtime_exception_ce, 0 TSRMLS_CC,
                               "Future doesn't contain a result.");
